@@ -17,9 +17,9 @@ export const useCounterStore = defineStore('auth', () => {
     refreshToken.value = rToken
   }
 
-  const refreshAccessToken = () => {
-    fetch(API.AUTH_REFRESH_TOKEN, {method: 'POST', body: { refresh: refreshToken.value }})
-  }
+  // const refreshAccessToken = () => {
+  //   fetch(API.AUTH_REFRESH_TOKEN, {method: 'POST', body: { refresh: refreshToken.value }})
+  // }
 
   return 
 
