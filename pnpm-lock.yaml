@@ -8,6 +8,9 @@ dependencies:
   '@quasar/extras':
     specifier: ^1.16.4
     version: 1.16.9
+  cedar-embeddable-editor:
+    specifier: ^1.0.8
+    version: 1.0.8
   pinia:
     specifier: ^2.0.11
     version: 2.1.7(typescript@4.9.5)(vue@3.4.4)
@@ -863,6 +866,10 @@ packages:
   /caniuse-lite@1.0.30001572:
     resolution: {integrity: sha512-1Pbh5FLmn5y4+QhNyJE9j3/7dK44dGB83/ZMjv/qJk86TvDbjk0LosiZo0i0WB0Vx607qMX9jYrn1VLHCkN4rw==}
     dev: true
+
+  /cedar-embeddable-editor@1.0.8:
+    resolution: {integrity: sha512-oTAZRzgA5Mrg5iaCOlonnN6CAY51CY0AJ/IewiMp/mZHYS8k8qhuppagx53nkVSsjUdsPEZroUA5t3bXaJV/Ow==}
+    dev: false
 
   /chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}

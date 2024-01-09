@@ -11,6 +11,14 @@ const routes: RouteRecordRaw[] = [
   },
   
   {
+    path: '/test-cedar',
+    component: () => import('layouts/main.vue'),
+    children: [{
+      path: '', component: () => import('pages/test-cedar.vue')
+    }],
+  },
+  
+  {
     path: '/auth/login',
     component: () => import('layouts/blank.vue'),
     children: [{
