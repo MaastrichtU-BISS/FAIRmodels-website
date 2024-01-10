@@ -29,8 +29,8 @@ const register = async () => {
       router.push('/')
     } else {
       if (register.errors) {
-        for (let [field, errors] of Object.entries(register.errors)) {
-          field_errors[field as 'email' | 'password1' | 'password2'] = errors
+        for (let field of ['email', 'password1', 'password2'] as const) {
+          field_errors[field] = register.errors[field] ?? []
         }
       }
       $q.notify({type: 'warning', position: 'top-right', message: 'Could not process your request. Please double-check your details'})
