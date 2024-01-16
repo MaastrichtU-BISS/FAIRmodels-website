@@ -8,3 +8,8 @@ a {
         text-decoration: underline;
     }
 }
+
+.q-field__messages {
+    white-space: pre; // make \n act as newline
+    line-height: 1.6;
+}

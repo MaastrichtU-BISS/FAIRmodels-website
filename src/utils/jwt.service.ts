@@ -18,7 +18,7 @@ export const jwtService = {
         if (!token) return false;
         const exp = jwtDecode(token).exp;
         if (!exp) return false
-        return (exp * 1000) < Date.now()
+        return (exp * 1000) > Date.now()
     },
 
     getRefreshToken(): string | null {
