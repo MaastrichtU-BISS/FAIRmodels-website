@@ -3,8 +3,8 @@ import getClient from "./client"
 const client = getClient()
 
 export const modelApiService = {
-    index() {
-        return client.get('/model/')
+    index(filter: {owned: boolean}) {
+        return client.get(`/model/`, {'params': filter})
     },
 
     create(data: {name: string, description: string}) {
@@ -15,8 +15,8 @@ export const modelApiService = {
         return client.get(`/model/${id}`);
     },
 
-    update(data: {name: string, description: string}) {
-        return client.put(`/model/`,  data);
+    update(id: string, data: {name: string, description: string}) {
+        return client.put(`/model/${id}`,  data);
     },
 
     delete(id: string) {

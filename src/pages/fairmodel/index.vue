@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { QTable, QTableProps, useQuasar } from 'quasar';
 import { modelApiService } from 'src/utils/model.api.service';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const $q = useQuasar()
@@ -31,6 +31,8 @@ const newModelDefault = {
 const newModel = ref({...newModelDefault})
 
 const createNewDialog = ref(false)
+const editDialog = ref(false);
+const editModel = ref<null | Fairmodel>(null);
 
 const createModel = async () => {
   const create = await modelApiService.create(newModel.value)
@@ -51,7 +53,21 @@ const createModel = async () => {
         $q.notify({type: 'warning', position: 'top-right', message: `Field ${key} has error(s): ${errors.join('\n')}`})
     }
   }
+}
 
+const saveEditModel = async () => {
+  if (!editModel.value) return;
+  const update = await modelApiService.update(
+    editModel.value.id,
+    { name: editModel.value?.name, description: editModel.value?.description }
+  )
+  if (update.status == 200) {
+    $q.notify({type: 'positive', position: 'top-right', message: update.data.message});
+    tableRef.value?.requestServerInteraction()
+    editDialog.value = false;
+  } else {
+    $q.notify({type: 'warning', position: 'top-right', message: update.data.message ?? 'An error occured'})
+  }
 }
 
 const tableRef = ref<QTable | null>(null);
@@ -68,11 +84,16 @@ const table = reactive({
   ] as QTableProps['columns'],
   rows: [],
   loading: true,
+  filter: {
+    owned: true
+  }
 })
+
+watch(() => table.filter.owned, () => tableRef.value?.requestServerInteraction());
 
 const tableOnRequest = async () => {
   table.loading = true;
-  const index = await modelApiService.index();
+  const index = await modelApiService.index(table.filter);
   if (index.status == 200) {
     table.rows = index.data.fairmodels;
     table.loading = false;
@@ -83,7 +104,8 @@ const tableOnRequest = async () => {
 }
 
 const actionEdit = (row: Fairmodel) => {
-  alert(`Editing ${row.id}`)
+  editModel.value = row;
+  editDialog.value = true;
 }
 
 const actionDelete = (row: Fairmodel) => {
@@ -96,6 +118,8 @@ const actionDelete = (row: Fairmodel) => {
     if (del.status === 200) {
       $q.notify({type: 'positive', position: 'top-right', message: del.data.message})
       tableRef.value?.requestServerInteraction()
+    } else {
+      $q.notify({type: 'warning', position: 'top-right', message: del.data.message})
     }
   })
 }
@@ -137,6 +161,29 @@ const actionView = (row: Fairmodel) => {
           </q-card>
         </q-dialog>
 
+        <q-dialog v-model="editDialog">
+          <q-card style="width: 64rem" v-if="editModel">
+            <q-card-section>
+              <div class="text-h5">Edit model {{ editModel.id.substring(0, 8) }}...</div>
+              <q-form
+                @submit="saveEditModel"
+                class="q-gutter-md"
+              >
+                <q-input
+                  v-model="editModel.name"
+                  label="Model name"
+                />
+                <q-input
+                  v-model="editModel.description"
+                  textarea
+                  label="Model description"
+                />
+                <q-btn type="submit" color="primary" label="Submit" />
+              </q-form>
+            </q-card-section>
+          </q-card>
+        </q-dialog>
+
         <div class="q-mt-lg row">
           <div class="col">
             <q-table
@@ -150,6 +197,14 @@ const actionView = (row: Fairmodel) => {
               @request="tableOnRequest"
               :pagination="{rowsPerPage: 10}"
             >
+              <template v-slot:top-right>
+                <q-toggle
+                  v-model="table.filter.owned"
+                  label="My Models"
+                />
+
+              </template>
+
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
                   <q-btn size="sm" flat rounded icon="mode_edit" @click="actionEdit(props.row)"></q-btn>

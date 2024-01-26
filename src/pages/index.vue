@@ -9,7 +9,7 @@
         <div class="text-subtitle1">Select what you want to do below</div>
         
         <div class="q-mt-lg row">
-          <div class="col-6" v-for="x in 7" :key="x">
+          <div class="col-6">
             <q-card flat bordered class="shadow-8">
               <q-card-section class="bg-primary text-white ">
                 <div class="text-h5">Fairmodels</div>
