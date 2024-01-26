@@ -14,12 +14,12 @@ export const jwtService = {
      * to the clients local internal time/date (which can be inaccurate, 
      * hence naive)
      */
-    isTokenNaivelyValid(token: string | null): boolean {
-        if (!token) return false;
-        const exp = jwtDecode(token).exp;
-        if (!exp) return false
-        return (exp * 1000) > Date.now()
-    },
+    // isTokenNaivelyValid(token: string | null): boolean {
+    //     if (!token) return false;
+    //     const exp = jwtDecode(token).exp;
+    //     if (!exp) return false
+    //     return (exp * 1000) > Date.now()
+    // },
 
     getRefreshToken(): string | null {
         return localStorage.getItem(accessKey)
