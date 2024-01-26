@@ -14,6 +14,23 @@ const routes: RouteRecordRaw[] = [
   },
   
   {
+    path: '/fairmodel/',
+    component: () => import('layouts/main.vue'),
+    children: [{
+      path: '', component: () => import('pages/fairmodel/index.vue'),
+      name: 'fairmodel.index',
+    }],
+  },
+  {
+    path: '/fairmodel/:id',
+    component: () => import('layouts/main.vue'),
+    children: [{
+      path: '', component: () => import('pages/fairmodel/id.vue'),
+      name: 'fairmodel.id',
+    }],
+  },
+  
+  {
     path: '/auth/login',
     component: () => import('layouts/blank.vue'),
     children: [{
