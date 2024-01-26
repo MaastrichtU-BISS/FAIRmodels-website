@@ -8,22 +8,25 @@ const axiosOptions = {
 }
 
 export const authClient = axios.create(axiosOptions);
-export const client = axios.create(axiosOptions)
+const client = axios.create(axiosOptions);
 
+// /*
 client.interceptors.request.use(async (req) => {
-  let accessToken = jwt.getAccessToken();
-  if (!jwtService.isTokenNaivelyValid(accessToken)) {
-    const refreshed = await authService.refresh();
-    if (refreshed) {
-      accessToken = jwt.getAccessToken()
-    } else {
-      // redirect to login
-      console.log("[CLIENT - REQ] REDIRECT TO LOGIN")
-    }
-  }
-  req.headers.Authorization = accessToken;
+  // let accessToken = jwt.getAccessToken();
+  const accessToken = jwt.getAccessToken();
+  // if (!jwtService.isTokenNaivelyValid(accessToken)) {
+  //   const refreshed = await authService.refresh();
+  //   if (refreshed) {
+  //     accessToken = jwt.getAccessToken()
+  //   } else {
+  //     // redirect to login
+  //     console.log("[CLIENT - REQ] REDIRECT TO LOGIN")
+  //   }
+  // }
+  req.headers.Authorization = `Bearer ${accessToken}`;
   return req;
 })
+// */
 
 client.interceptors.response.use(async (res) => {
   if (res.status == 401) {
@@ -40,3 +43,10 @@ client.interceptors.response.use(async (res) => {
   }
   return res;
 })
+
+// export client = client;
+export const getClient = () => {
+  return client;
+}
+
+export default getClient
