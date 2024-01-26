@@ -14,8 +14,8 @@
         <q-toolbar-title>
           FAIRmodels
         </q-toolbar-title>
-
-        <div>FAIR4AI v1.2.3</div>
+        
+        <q-btn class="q-ml-md q-px-sm" label="Logout" @click="logout" flat dense />
       </q-toolbar>
     </q-header>
 
@@ -42,11 +42,20 @@
 </template>
 
 <script setup lang="ts">
+import { authService } from 'src/utils/auth.service';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const leftDrawerOpen = ref(false)
 
-function toggleLeftDrawer() {
+const toggleLeftDrawer = () => {
   leftDrawerOpen.value = !leftDrawerOpen.value
+}
+
+const logout = () => {
+  authService.logout();
+	router.push('/auth/login');
 }
 </script>
