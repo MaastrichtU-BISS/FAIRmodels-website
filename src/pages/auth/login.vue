@@ -25,6 +25,7 @@ const login = async () => {
   try {
     const login = await authService.login(email.value, password.value);
     if (login.status) {
+      $q.notify({type: 'positive', position: 'top-right', message: 'Welcome back'})
       router.push('/')
     } else {
       for (let field of ['email', 'password', 'non_field_errors'] as LoginErrorKeys[]) {
