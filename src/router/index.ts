@@ -8,6 +8,7 @@ import {
 
 import routes from './routes';
 import jwtService from 'src/utils/jwt.service';
+import { useQuasar } from 'quasar';
 
 /*
  * If not building with SSR mode, you can
@@ -30,18 +31,22 @@ export default route(function (/* { store, ssrContext } */) {
   });
 
   // Validating if (atleast) the refreshtoken is (naively) valid
-  Router.beforeEach((to, from, next) => {
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-      const refreshToken = jwtService.getRefreshToken();
-      if (!jwtService.isTokenNaivelyValid(refreshToken)) {
-        next({name: 'auth.login'})
-      } else {
-        next()
-      }
-    } else {
-      next()
-    }
-  })
+  // Router.beforeEach((to, from, next) => {
+  //   if (to.matched.some(record => record.meta.requiresAuth)) {
+  //     const refreshToken = jwtService.getRefreshToken();
+  //     console.log("refresh", refreshToken)
+  //     if (!jwtService.isTokenNaivelyValid(refreshToken)) {
+  //       console.log("Session expired")
+  //       const $q = useQuasar();
+  //       $q.notify("Your session has ended. Please log-in again.");
+  //       next({name: 'auth.login'})
+  //     } else {
+  //       next()
+  //     }
+  //   } else {
+  //     next()
+  //   }
+  // })
 
   return Router;
 });
