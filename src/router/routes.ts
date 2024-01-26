@@ -22,11 +22,24 @@ const routes: RouteRecordRaw[] = [
     }],
   },
   {
-    path: '/fairmodel/:id',
+    path: '/fairmodel/:fairmodel_id',
     component: () => import('layouts/main.vue'),
     children: [{
       path: '', component: () => import('pages/fairmodel/id.vue'),
-      name: 'fairmodel.id',
+    }],
+  },
+  {
+    path: '/fairmodel/:fairmodel_id/version',
+    component: () => import('layouts/main.vue'),
+    children: [{
+      path: '', component: () => import('pages/fairmodel/id.vue'),
+    }],
+  },
+  {
+    path: '/fairmodel/:fairmodel_id/version/:version_id',
+    component: () => import('layouts/main.vue'),
+    children: [{
+      path: '', component: () => import('pages/fairmodel/id.vue')
     }],
   },
   

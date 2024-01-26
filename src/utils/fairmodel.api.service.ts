@@ -2,7 +2,7 @@ import getClient from "./client"
 
 const client = getClient()
 
-export const modelApiService = {
+export const fairmodelApiService = {
     index(filter: {owned: boolean}) {
         return client.get(`/model/`, {'params': filter})
     },

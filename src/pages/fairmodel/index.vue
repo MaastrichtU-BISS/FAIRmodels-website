@@ -1,48 +1,33 @@
 <script setup lang="ts">
 import { QTable, QTableProps, useQuasar } from 'quasar';
-import { modelApiService } from 'src/utils/model.api.service';
+import { Fairmodel } from 'src/types';
+import { fairmodelApiService } from 'src/utils/fairmodel.api.service';
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const $q = useQuasar()
 const router = useRouter();
 
-// const data = ref('');
-// const getData = async () => {
-//   const index = await modelApiService.index()
-//   if (index.status == 200) {
-//     data.value = index.data
-//   } else {
-//     alert('ERROR:' + index.status)
-//   }
-// }
-
-type Fairmodel = {
-  id: string,
-  name: string,
-  description: string
-}
-
-const newModelDefault = {
+const newFairmodelDefault = {
   name: '',
   description: ''
 }
 
-const newModel = ref({...newModelDefault})
+const newFairmodel = ref({...newFairmodelDefault})
 
 const createNewDialog = ref(false)
 const editDialog = ref(false);
-const editModel = ref<null | Fairmodel>(null);
+const editFairmodel = ref<null | Fairmodel>(null);
 
-const createModel = async () => {
-  const create = await modelApiService.create(newModel.value)
+const createFairmodel = async () => {
+  const create = await fairmodelApiService.create(newFairmodel.value)
   if (create.status == 200) {
     if (create.data.message) {
       $q.notify({type: 'positive', position: 'top-right', message: create.data.message})
     }
     tableRef.value?.requestServerInteraction()
     createNewDialog.value = false;
-    newModel.value = {...newModelDefault};
+    newFairmodel.value = {...newFairmodelDefault};
   } else {
     if (create.data.message) {
       $q.notify({type: 'warning', position: 'top-right', message: create.data.message})
@@ -55,11 +40,11 @@ const createModel = async () => {
   }
 }
 
-const saveEditModel = async () => {
-  if (!editModel.value) return;
-  const update = await modelApiService.update(
-    editModel.value.id,
-    { name: editModel.value?.name, description: editModel.value?.description }
+const saveEditFairmodel = async () => {
+  if (!editFairmodel.value) return;
+  const update = await fairmodelApiService.update(
+    editFairmodel.value.id,
+    { name: editFairmodel.value?.name, description: editFairmodel.value?.description }
   )
   if (update.status == 200) {
     $q.notify({type: 'positive', position: 'top-right', message: update.data.message});
@@ -93,7 +78,7 @@ watch(() => table.filter.owned, () => tableRef.value?.requestServerInteraction()
 
 const tableOnRequest = async () => {
   table.loading = true;
-  const index = await modelApiService.index(table.filter);
+  const index = await fairmodelApiService.index(table.filter);
   if (index.status == 200) {
     table.rows = index.data.fairmodels;
     table.loading = false;
@@ -104,17 +89,17 @@ const tableOnRequest = async () => {
 }
 
 const actionEdit = (row: Fairmodel) => {
-  editModel.value = row;
+  editFairmodel.value = row;
   editDialog.value = true;
 }
 
 const actionDelete = (row: Fairmodel) => {
   $q.dialog({
     title: 'Alert',
-    message: 'Are you sure you want to delete this model?',
+    message: 'Are you sure you want to delete this fairmodel?',
     cancel: true
   }).onOk(async () => {
-    const del = await modelApiService.delete(row.id)
+    const del = await fairmodelApiService.delete(row.id)
     if (del.status === 200) {
       $q.notify({type: 'positive', position: 'top-right', message: del.data.message})
       tableRef.value?.requestServerInteraction()
@@ -125,7 +110,7 @@ const actionDelete = (row: Fairmodel) => {
 }
 
 const actionView = (row: Fairmodel) => {
-  router.push(`/model/${row.id}/`)
+  router.push(`/fairmodel/${row.id}/`)
 }
 
 </script>
@@ -141,17 +126,17 @@ const actionView = (row: Fairmodel) => {
         <q-dialog v-model="createNewDialog">
           <q-card style="width: 64rem">
             <q-card-section>
-              <div class="text-h5">Create new model</div>
+              <div class="text-h5">Create new fairmodel</div>
               <q-form
-                @submit="createModel"
+                @submit="createFairmodel"
                 class="q-gutter-md"
               >
                 <q-input
-                  v-model="newModel.name"
+                  v-model="newFairmodel.name"
                   label="Model name"
                 />
                 <q-input
-                  v-model="newModel.description"
+                  v-model="newFairmodel.description"
                   textarea
                   label="Model description"
                 />
@@ -162,21 +147,21 @@ const actionView = (row: Fairmodel) => {
         </q-dialog>
 
         <q-dialog v-model="editDialog">
-          <q-card style="width: 64rem" v-if="editModel">
+          <q-card style="width: 64rem" v-if="editFairmodel">
             <q-card-section>
-              <div class="text-h5">Edit model {{ editModel.id.substring(0, 8) }}...</div>
+              <div class="text-h5">Edit fairmodel {{ editFairmodel.id.substring(0, 8) }}...</div>
               <q-form
-                @submit="saveEditModel"
+                @submit="saveEditFairmodel"
                 class="q-gutter-md"
               >
                 <q-input
-                  v-model="editModel.name"
-                  label="Model name"
+                  v-model="editFairmodel.name"
+                  label="Fairmodel name"
                 />
                 <q-input
-                  v-model="editModel.description"
+                  v-model="editFairmodel.description"
                   textarea
-                  label="Model description"
+                  label="Fairmodel description"
                 />
                 <q-btn type="submit" color="primary" label="Submit" />
               </q-form>
@@ -200,16 +185,16 @@ const actionView = (row: Fairmodel) => {
               <template v-slot:top-right>
                 <q-toggle
                   v-model="table.filter.owned"
-                  label="My Models"
+                  label="My Fairmodels"
                 />
 
               </template>
 
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
+                  <q-btn size="sm" flat rounded icon="visibility" @click="actionView(props.row)"></q-btn>
                   <q-btn size="sm" flat rounded icon="mode_edit" @click="actionEdit(props.row)"></q-btn>
                   <q-btn size="sm" flat rounded icon="delete" @click="actionDelete(props.row)"></q-btn>
-                  <q-btn size="sm" flat rounded icon="visibility" @click="actionView(props.row)"></q-btn>
                 </q-td>
               </template>
             </q-table>
