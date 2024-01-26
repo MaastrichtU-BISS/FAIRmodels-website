@@ -2,8 +2,10 @@
 import { QTable, QTableProps, useQuasar } from 'quasar';
 import { modelApiService } from 'src/utils/model.api.service';
 import { onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const $q = useQuasar()
+const router = useRouter();
 
 // const data = ref('');
 // const getData = async () => {
@@ -80,8 +82,26 @@ const tableOnRequest = async () => {
   }
 }
 
-const performAction = (row: Fairmodel) => {
-  alert(`Hi ${row.id}`)
+const actionEdit = (row: Fairmodel) => {
+  alert(`Editing ${row.id}`)
+}
+
+const actionDelete = (row: Fairmodel) => {
+  $q.dialog({
+    title: 'Alert',
+    message: 'Are you sure you want to delete this model?',
+    cancel: true
+  }).onOk(async () => {
+    const del = await modelApiService.delete(row.id)
+    if (del.status === 200) {
+      $q.notify({type: 'positive', position: 'top-right', message: del.data.message})
+      tableRef.value?.requestServerInteraction()
+    }
+  })
+}
+
+const actionView = (row: Fairmodel) => {
+  router.push(`/model/${row.id}/`)
 }
 
 </script>
@@ -132,9 +152,9 @@ const performAction = (row: Fairmodel) => {
             >
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
-                  <q-btn size="sm" flat rounded icon="mode_edit" @click="performAction(props.row)"></q-btn>
-                  <q-btn size="sm" flat rounded icon="delete" @click="performAction(props.row)"></q-btn>
-                  <q-btn size="sm" flat rounded icon="visibility" @click="performAction(props.row)"></q-btn>
+                  <q-btn size="sm" flat rounded icon="mode_edit" @click="actionEdit(props.row)"></q-btn>
+                  <q-btn size="sm" flat rounded icon="delete" @click="actionDelete(props.row)"></q-btn>
+                  <q-btn size="sm" flat rounded icon="visibility" @click="actionView(props.row)"></q-btn>
                 </q-td>
               </template>
             </q-table>
