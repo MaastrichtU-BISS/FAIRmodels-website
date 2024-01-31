@@ -17,8 +17,10 @@ export type FairmodelVersion = {
   id: string,
   fairmodel_id: Fairmodel['id'],
   version: string,
-  has_onnx: boolean,
+  has_model: boolean,
   metadata_id: string,
   update_description: string,
+
+  model_type: 'ONNX' | 'PMML'
   // created_at: string
 }
