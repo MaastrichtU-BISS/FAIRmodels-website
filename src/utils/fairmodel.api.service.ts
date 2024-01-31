@@ -4,22 +4,22 @@ const client = getClient()
 
 export const fairmodelApiService = {
     index(filter: {owned: boolean}) {
-        return client.get(`/model/`, {'params': filter})
+        return client.get(`/fairmodel/`, {'params': filter})
     },
 
     create(data: {name: string, description: string}) {
-        return client.post(`/model/`, data);
+        return client.post(`/fairmodel/`, data);
     },
 
     get(id: string) {
-        return client.get(`/model/${id}`);
+        return client.get(`/fairmodel/${id}`);
     },
 
     update(id: string, data: {name: string, description: string}) {
-        return client.put(`/model/${id}`,  data);
+        return client.put(`/fairmodel/${id}`,  data);
     },
 
     delete(id: string) {
-        return client.delete(`/model/${id}`)
+        return client.delete(`/fairmodel/${id}`)
     }
 }
