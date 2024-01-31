@@ -1,5 +1,5 @@
 import { useRouter } from "vue-router";
-import { authClient } from "./client"
+import getClient, { authClient } from "./client"
 import jwtService from "./jwt.service";
 
 const AUTH_API = {
@@ -19,7 +19,13 @@ type LoginResponse =
 | { status: true }
 | { status: false, errors: Record<LoginErrorKeys, string[]> }
 
+const client = getClient();
+
 export const authService = {
+	user: () => {
+		return client.get('/auth/user');
+	},
+
 	register: async (email: string, password1: string, password2: string): Promise<RegisterResponse> => {
 		const response = await authClient.post(AUTH_API.REGISTER, { email, password1, password2 });
 		if (Math.floor(response.status / 100) == 2) {
@@ -53,22 +59,23 @@ export const authService = {
 	},
 
 	refresh: async () => {
-		console.log('[AUTH - REFRESH]')
 		const refreshToken = jwtService.getRefreshToken();
 		// if (!jwtService.isTokenNaivelyValid(refreshToken)) {
 		// 	// next: redirect to login
 		// 	return false;
 		// }
+		if (!refreshToken) {
+			return false;
+		}
 		const response = await authClient.post(AUTH_API.REFRESH_TOKEN, { refresh: jwtService.getRefreshToken() });
 		if (response.status === 200) {
-		if (response.data.accessToken && response.data.refreshToken) {
-			jwtService.setTokens(response.data.accessToken, response.data.refreshToken)
-			return true;
-		} else {
-			throw Error("Token refresh has invalid response body")
-		}
+			if (response.data.access && response.data.refresh) {
+				jwtService.setTokens(response.data.access, response.data.refresh)
+				return true;
+			} else {
+				throw Error("Token refresh has invalid response body")
+			}
 		} else if (response.status === 401 && response.data.code === "token_not_valid") {
-			// next: redirect to login
 			return false;
 		} else {
 			throw Error("Error refreshing token")

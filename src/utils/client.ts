@@ -1,6 +1,8 @@
 import axios from 'axios'
 import jwt, { jwtService } from './jwt.service';
 import { authService } from './auth.service';
+import { useQuasar } from 'quasar';
+import getRouter from '../router';
 
 const axiosOptions = {
   baseURL: process.env.API_URL,
@@ -31,17 +33,31 @@ client.interceptors.request.use(async (req) => {
 client.interceptors.response.use(async (res) => {
   if (res.status == 401) {
     // src: https://alitoshmatov.medium.com/handling-token-based-authentication-and-refreshing-token-in-axios-axios-interceptors-d896f4e3a16c
-    const refreshed = await authService.refresh();
+    let refreshed;
+    try {
+      refreshed = await authService.refresh();
+    } catch (err) {
+      refreshed = false;
+      if (err instanceof Error) {
+        console.error("Error occured while refreshing token:", err)
+      }
+    }
+
     if (refreshed) {
       const accessToken = jwt.getAccessToken()
       const config = res.config;
       config.headers.Authorization = accessToken;
       return client(config); // <-- replaying request
     } else {
-      console.log("[CLIENT - RES] REDIRECT TO LOGIN")
+      jwt.clearTokens();
+      getRouter().push('/auth/login')
     }
   }
   return res;
+}, (err) => {
+  const $q = useQuasar()
+  console.error(123, err, $q)
+  $q.notify({type: 'negative', message: err.message})
 })
 
 // export client = client;

@@ -7,19 +7,11 @@ import {
 } from 'vue-router';
 
 import routes from './routes';
-import jwtService from 'src/utils/jwt.service';
-import { useQuasar } from 'quasar';
+import { authService } from 'src/utils/auth.service';
+import { useUserStore } from 'src/stores/user';
+import { User } from 'src/types';
 
-/*
- * If not building with SSR mode, you can
- * directly export the Router instantiation;
- *
- * The function below can be async too; either use
- * async/await or return a Promise which resolves
- * with the Router instance.
- */
-
-export default route(function (/* { store, ssrContext } */) {
+export default function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
     : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory);
@@ -48,5 +40,25 @@ export default route(function (/* { store, ssrContext } */) {
   //   }
   // })
 
+  const userStore = useUserStore();
+
+  Router.beforeEach(async (to, from, next) => {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+      const user = await authService.user();
+      if (user.status == 200) {
+          userStore.setUser(user.data as User)
+          return next()
+      } else {
+        if (user.data.code && ['bad_authorization_header', 'token_not_valid'].includes(user.data.code)) {
+          return next('/auth/login');
+        } else {
+          throw Error("An error occured when fetching user")
+        }
+      }
+    } else {
+      return next()
+    }
+  })
+
   return Router;
-});
+};
