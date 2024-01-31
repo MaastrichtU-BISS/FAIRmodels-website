@@ -22,7 +22,7 @@ export const jwtService = {
     // },
 
     getRefreshToken(): string | null {
-        return localStorage.getItem(accessKey)
+        return localStorage.getItem(refreshKey)
     },
 
     setTokens(accessToken: string, refreshToken: string) {
