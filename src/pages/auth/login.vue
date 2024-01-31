@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import { LoginErrorKeys, authService } from 'src/utils/auth.service';
-import { reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const $q = useQuasar();
@@ -38,6 +38,13 @@ const login = async () => {
   }
   loading.value = false;
 }
+
+onMounted(async () => {
+  const user = await authService.user();
+  if (user.status == 200) {
+    router.push('/');
+  }
+})
 </script>
 
 
