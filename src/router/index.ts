@@ -43,13 +43,16 @@ export default function (/* { store, ssrContext } */) {
   const userStore = useUserStore();
 
   Router.beforeEach(async (to, from, next) => {
-    if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (to.meta.requiresAuth == undefined || to.meta.requiresAuth == true) {
       const user = await authService.user();
       if (user.status == 200) {
           userStore.setUser(user.data as User)
           return next()
       } else {
         if (user.data.code && ['bad_authorization_header', 'token_not_valid'].includes(user.data.code)) {
+          // This shouldn't occur, since the response interceptor of 
+          // axios should catch expired tokens and redirect before
+          // reaching this point.
           return next('/auth/login');
         } else {
           throw Error("An error occured when fetching user")

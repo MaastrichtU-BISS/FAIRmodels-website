@@ -1,6 +1,7 @@
 import { useRouter } from "vue-router";
 import getClient, { authClient } from "./client"
 import jwtService from "./jwt.service";
+import { useUserStore } from "src/stores/user";
 
 const AUTH_API = {
 	REGISTER: '/auth/register/',
@@ -45,8 +46,10 @@ export const authService = {
 	login: async (email: string, password: string): Promise<LoginResponse> => {
 		const response = await authClient.post(AUTH_API.LOGIN, { email, password });
 		if (Math.floor(response.status / 100) == 2) {
-			if (response.data.access && response.data.refresh) {
+			if (response.data.access && response.data.refresh && response.data.user) {
 				jwtService.setTokens(response.data.access, response.data.refresh)
+				const userStore = useUserStore()
+				userStore.setUser(response.data.user)
 				return { status: true };
 			} else {
 				throw Error("Invalid response body")

@@ -2,15 +2,35 @@ import { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/auth/login',
+    component: () => import('layouts/blank.vue'),
+    children: [{
+      path: '', component: () => import('pages/auth/login.vue'),
+      name: 'auth.login',
+    }],
+    meta: {
+      requiresAuth: false
+    }
+  },
+  {
+    path: '/auth/register',
+    component: () => import('layouts/blank.vue'),
+    children: [{
+      path: '', component: () => import('pages/auth/register.vue'),
+      name: 'auth.register',
+    }],
+    meta: {
+      requiresAuth: false
+    }
+  },
+
+  {
     path: '/',
     component: () => import('layouts/main.vue'),
     children: [{
       path: '', component: () => import('pages/index.vue'),
       name: 'index'
-    }],
-    meta: {
-      requiresAuth: true
-    }
+    }]
   },
   
   {
@@ -40,23 +60,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/main.vue'),
     children: [{
       path: '', component: () => import('pages/fairmodel/id.vue')
-    }],
-  },
-  
-  {
-    path: '/auth/login',
-    component: () => import('layouts/blank.vue'),
-    children: [{
-      path: '', component: () => import('pages/auth/login.vue'),
-      name: 'auth.login',
-    }],
-  },
-  {
-    path: '/auth/register',
-    component: () => import('layouts/blank.vue'),
-    children: [{
-      path: '', component: () => import('pages/auth/register.vue'),
-      name: 'auth.register',
     }],
   },
   
