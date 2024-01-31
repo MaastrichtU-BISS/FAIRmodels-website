@@ -179,7 +179,8 @@ const downloadViewModel = async () => {
 
 }
 
-const actionLink = () => {
+const dialogLink = ref(false)
+const actionLink = (version: FairmodelVersion) => {
   void(0)
 }
 </script>
@@ -189,7 +190,6 @@ const actionLink = () => {
     <div class="row justify-center q-mt-xl">
       <div class="col-md-6">
         <h4 class="text-bold q-mt-md q-mb-lg">Fairmodel {{ fairmodel.name }}</h4>
-        <!-- <pre>{{ JSON.stringify(fairmodel) }}</pre> -->
 
         <q-btn color="primary" label="New Version" @click="dialogCreateFairmodelVersion = true" />
 
@@ -295,7 +295,7 @@ const actionLink = () => {
           </q-card>
         </q-dialog>
 
-        <q-dialog v-model="dialogViewModel">
+        <q-dialog v-model="dialogLink">
           <q-card style="width: 64rem">
             <q-card-section>
               <div class="text-h5">View model</div>
@@ -324,21 +324,41 @@ const actionLink = () => {
             >
               <template v-slot:body-cell-metadata="props">
                 <q-td :props="props">
-                  <q-btn v-if="(props.row as FairmodelVersion).metadata_id === ''" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetMetadata(props.row)"></q-btn>
-                  <q-btn v-else color="green-10" flat rounded size="md" icon="check_box" @click="actionViewMetadata(props.row)" />
+                  <q-btn v-if="(props.row as FairmodelVersion).metadata_id === ''" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetMetadata(props.row)">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                      Set metadata
+                    </q-tooltip>
+                  </q-btn>
+                  <q-btn v-else color="green-10" flat rounded size="md" icon="check_box" @click="actionViewMetadata(props.row)">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                      View metadata
+                    </q-tooltip>
+                  </q-btn>
                 </q-td>
               </template>
               <template v-slot:body-cell-model="props">
                 <q-td :props="props">
-                  <q-btn v-if="!(props.row as FairmodelVersion).has_model" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetModel(props.row)"></q-btn>
-                  <q-btn v-else color="green-10" flat rounded size="md" icon="check_box" @click="actionViewModel(props.row)" />
+                  <q-btn v-if="!(props.row as FairmodelVersion).has_model" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetModel(props.row)">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                      Set model
+                    </q-tooltip>
+                  </q-btn>
+                  <q-btn v-else color="green-10" flat rounded size="md" icon="check_box" @click="actionViewModel(props.row)">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                      View model
+                    </q-tooltip>
+                  </q-btn>
                 </q-td>
               </template>`
               
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
                   <!-- <q-btn size="sm" flat rounded icon="delete" @click="actionDelete(props.row)"></q-btn> -->
-                  <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="actionLink(props.row)"></q-btn>
+                  <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="actionLink(props.row)">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                      Link fields
+                    </q-tooltip>
+                  </q-btn>
                 </q-td>
               </template>
             </q-table>
