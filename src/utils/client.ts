@@ -31,7 +31,7 @@ client.interceptors.request.use(async (req) => {
 // */
 
 client.interceptors.response.use(async (res) => {
-  if (res.status == 401) {
+  if (res.status == 401 && res.data.code && res.data.code == 'token_not_valid') {
     // src: https://alitoshmatov.medium.com/handling-token-based-authentication-and-refreshing-token-in-axios-axios-interceptors-d896f4e3a16c
     let refreshed;
     try {
