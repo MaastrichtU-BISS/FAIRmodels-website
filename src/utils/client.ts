@@ -55,9 +55,10 @@ client.interceptors.response.use(async (res) => {
   }
   return res;
 }, (err) => {
+  console.error("AxiosError:", err)
   const $q = useQuasar()
-  console.error(123, err, $q)
-  $q.notify({type: 'negative', message: err.message})
+  if ($q)
+    $q.notify({type: 'negative', message: err.message})
 })
 
 // export client = client;
