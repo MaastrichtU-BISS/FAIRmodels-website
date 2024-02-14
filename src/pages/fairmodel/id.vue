@@ -23,11 +23,8 @@ onMounted(async () => {
     $q.notify({type: 'warning', message: get.data.message})
     return
   }
-
-  const index = await fairmodelVersionApiService.index(fairmodel.value!.id, table.filter);
-  console.log(index);
-
-  tableRef.value?.requestServerInteraction()
+  
+  tableOnRequest()
 })
 
 const getMetadataURL = (id: string) => {
@@ -179,9 +176,13 @@ const downloadViewModel = async () => {
 
 }
 
-const dialogLink = ref(false)
+const linkModelObject = ref<FairmodelVersion>();
+const dialogLinkModel = computed({
+  get: () => linkModelObject.value !== undefined,
+  set: (state: boolean) => linkModelObject.value = undefined // Always assume false when set directly
+})
 const actionLink = (version: FairmodelVersion) => {
-  void(0)
+  linkModelObject.value = {...version}
 }
 </script>
 
@@ -294,16 +295,16 @@ const actionLink = (version: FairmodelVersion) => {
           </q-card>
         </q-dialog>
 
-        <q-dialog v-model="dialogLink">
+        <q-dialog v-model="dialogLinkModel">
           <q-card style="width: 64rem">
             <q-card-section>
-              <div class="text-h5">View model</div>
+              <div class="text-h5">Link Model Features</div>
               
-              <div>Here you can view and download the uploaded model for this version</div>.
+              <div>In this dialog you can link input and output features of the set metadata and uploaded model.</div>.
 
               <div>Model type: {{ viewModelObject?.model_type }}</div>
             
-              <q-btn class="q-mt-md" :loading="downloadLoading" color="primary" label="Download" @click="downloadViewModel"></q-btn>
+              <q-btn class="q-mt-md" color="primary" label="Done"></q-btn>
             </q-card-section>
           </q-card>
         </q-dialog>
