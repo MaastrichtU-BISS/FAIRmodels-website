@@ -39,7 +39,7 @@ const table = reactive({
     {name: 'id', label: 'Id', field: (row: FairmodelVersion) => row.id, align: 'left' },
     {name: 'version', label: 'Name', field: (row: FairmodelVersion) => row.version, align: 'left' },
     {name: 'update_desc', label: 'Update Description', field: (row: FairmodelVersion) => row.update_description, align: 'left' },
-    {name: 'metadata', label: 'Cedar Metadata ID', field: (row: FairmodelVersion) => row.metadata_id === '' ? 'false' : row.metadata_id, align: 'center' },
+    {name: 'metadata', label: 'Cedar Metadata ID', field: (row: FairmodelVersion) => row.metadata_id == null ? 'false' : row.metadata_id, align: 'center' },
     {name: 'model', label: 'Model Representation', field: (row: FairmodelVersion) => row.has_model, align: 'center' },
     {name: 'actions', label: 'Actions', align: 'center' },
   ] as QTableProps['columns'],
@@ -265,8 +265,7 @@ const actionLink = (version: FairmodelVersion) => {
                       :href="getMetadataURL(viewMetadataObject.metadata_id)"
                       target="_blank"
                       icon="open_in_new"
-                      ddcolor="primary"
-                      round
+                      round 
                       flat
                     />
                   </template>
@@ -324,7 +323,7 @@ const actionLink = (version: FairmodelVersion) => {
             >
               <template v-slot:body-cell-metadata="props">
                 <q-td :props="props">
-                  <q-btn v-if="(props.row as FairmodelVersion).metadata_id === ''" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetMetadata(props.row)">
+                  <q-btn v-if="(props.row as FairmodelVersion).metadata_id == null" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetMetadata(props.row)">
                     <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Set metadata
                     </q-tooltip>
