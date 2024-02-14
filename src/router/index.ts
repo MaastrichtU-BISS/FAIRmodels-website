@@ -49,10 +49,8 @@ export default function (/* { store, ssrContext } */) {
           userStore.setUser(user.data as User)
           return next()
       } else {
-        if (user.data.code && ['bad_authorization_header', 'token_not_valid'].includes(user.data.code)) {
-          // This shouldn't occur, since the response interceptor of 
-          // axios should catch expired tokens and redirect before
-          // reaching this point.
+        if (user.data.code && ['bad_authorization_header', 'token_not_valid', 'user_not_found'].includes(user.data.code)) {
+          authService.logout(); // just to make sure tokens are not dangling in localstorage
           return next('/auth/login');
         } else {
           throw Error("An error occured when fetching user")
