@@ -19,6 +19,7 @@ export type FairmodelVersion = {
   version: string,
   has_model: boolean,
   metadata_id: string,
+  metadata_json: JSON
   update_description: string,
 
   model_type: 'ONNX' | 'PMML'
