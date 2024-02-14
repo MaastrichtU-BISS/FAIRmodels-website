@@ -70,7 +70,7 @@ const logout = () => {
           FAIR4AI Navigation
         </q-item-label>
       </q-list>
-      <q-item clickable @click="router.push('fairmodel')">
+      <q-item clickable @click="router.push('/fairmodel')">
         FAIRmodels
       </q-item>
     </q-drawer>
