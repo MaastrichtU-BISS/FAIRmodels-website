@@ -1,5 +1,5 @@
 import { useRouter } from "vue-router";
-import getClient, { authClient } from "./client"
+import { client, authClient } from "./client"
 import jwtService from "./jwt.service";
 import { useUserStore } from "src/stores/user";
 
@@ -19,8 +19,6 @@ type RegisterResponse =
 type LoginResponse =
 | { status: true }
 | { status: false, errors: Record<LoginErrorKeys, string[]> }
-
-const client = getClient();
 
 export const authService = {
 	user: () => {

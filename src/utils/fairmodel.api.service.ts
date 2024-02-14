@@ -1,6 +1,4 @@
-import getClient from "./client"
-
-const client = getClient()
+import { client } from "./client"
 
 export const fairmodelApiService = {
     index(filter: {owned: boolean}) {

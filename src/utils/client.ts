@@ -10,7 +10,7 @@ const axiosOptions = {
 }
 
 export const authClient = axios.create(axiosOptions);
-const client = axios.create(axiosOptions);
+export const client = axios.create(axiosOptions);
 
 // /*
 client.interceptors.request.use(async (req) => {
@@ -62,8 +62,8 @@ client.interceptors.response.use(async (res) => {
 })
 
 // export client = client;
-export const getClient = () => {
-  return client;
-}
+// export const getClient = () => {
+//   return client;
+// }
 
-export default getClient
+// export default getClient
