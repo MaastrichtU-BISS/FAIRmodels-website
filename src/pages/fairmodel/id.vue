@@ -325,12 +325,12 @@ const actionLink = (version: FairmodelVersion) => {
               <template v-slot:body-cell-metadata="props">
                 <q-td :props="props">
                   <q-btn v-if="(props.row as FairmodelVersion).metadata_id === ''" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetMetadata(props.row)">
-                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Set metadata
                     </q-tooltip>
                   </q-btn>
                   <q-btn v-else color="green-10" flat rounded size="md" icon="check_box" @click="actionViewMetadata(props.row)">
-                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
                       View metadata
                     </q-tooltip>
                   </q-btn>
@@ -339,12 +339,12 @@ const actionLink = (version: FairmodelVersion) => {
               <template v-slot:body-cell-model="props">
                 <q-td :props="props">
                   <q-btn v-if="!(props.row as FairmodelVersion).has_model" color="grey-7" size="md" flat rounded icon="check_box_outline_blank" @click="actionSetModel(props.row)">
-                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Set model
                     </q-tooltip>
                   </q-btn>
                   <q-btn v-else color="green-10" flat rounded size="md" icon="check_box" @click="actionViewModel(props.row)">
-                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
                       View model
                     </q-tooltip>
                   </q-btn>
@@ -355,7 +355,7 @@ const actionLink = (version: FairmodelVersion) => {
                 <q-td :props="props">
                   <!-- <q-btn size="sm" flat rounded icon="delete" @click="actionDelete(props.row)"></q-btn> -->
                   <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="actionLink(props.row)">
-                    <q-tooltip anchor="top middle" :offset="[0, 25]" :delay="500">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Link fields
                     </q-tooltip>
                   </q-btn>
