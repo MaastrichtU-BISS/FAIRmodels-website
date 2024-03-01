@@ -80,6 +80,7 @@ const createFairmodelVersion = async () => {
 }
 
 // DIALOG: set metadata
+const loadingSaveMetadata = ref(false);
 const setMetadataId = ref<FairmodelVersion['id']>()
 const dialogSetMetadata = computed({
   get: () => setMetadataId.value !== undefined,
@@ -94,6 +95,7 @@ const setMetadataDataDefault = {
 }
 const setMetadataData = reactive({...setMetadataDataDefault})
 const saveMetadata = async () => {
+  loadingSaveMetadata.value = true;
   const update = await fairmodelVersionApiService.update(
     fairmodel.value!.id,
     setMetadataId.value!,
@@ -106,6 +108,8 @@ const saveMetadata = async () => {
   } else {
     $q.notify({type: 'warning', message: update.data.message})
   }
+  
+  loadingSaveMetadata.value = false;
 }
 
 // DIALOG: view metadata
@@ -231,7 +235,7 @@ const actionLink = (version: FairmodelVersion) => {
                   label="CEDAR metadata ID"
                 />
 
-                <q-btn type="submit" color="primary" label="Submit" />
+                <q-btn :loading="loadingSaveMetadata" type="submit" color="primary" label="Submit" />
               </q-form>
             </q-card-section>
           </q-card>
@@ -291,6 +295,24 @@ const actionLink = (version: FairmodelVersion) => {
 
                 <q-btn type="submit" color="primary" label="Submit" />
               </q-form>
+            </q-card-section>
+          </q-card>
+        </q-dialog>
+        
+        <q-dialog v-model="dialogViewModel">
+          <q-card style="width: 64rem" v-if="viewModelObject">
+            <q-card-section>
+              <div class="text-h5">View model file</div>
+              <div class="q-gutter-md">
+                <q-field readonly filled v-model="viewModelObject.model_type" label="Model type">
+                  <template v-slot:control>
+                    {{ viewModelObject.model_type }}
+                  </template>
+                </q-field>
+
+                <q-btn label="Download" icon="download" color="primary" @click="downloadViewModel" />
+
+              </div>
             </q-card-section>
           </q-card>
         </q-dialog>
