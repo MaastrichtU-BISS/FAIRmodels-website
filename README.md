@@ -1,40 +1,34 @@
 # FAIRmodels (fairmodels-website)
 
-A project
+Frontend for the FAIRmodels-backend package.
 
 ## Install the dependencies
 ```bash
-yarn
-# or
-npm install
+pnpm install
 ```
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 ```bash
-quasar dev
+pnpm dev
 ```
 
 
 ### Lint the files
 ```bash
-yarn lint
-# or
-npm run lint
+pnpm lint
 ```
 
 
 ### Format the files
 ```bash
-yarn format
-# or
-npm run format
+pnpm format
 ```
 
 
 
 ### Build the app for production
 ```bash
-quasar build
+pnpm build
 ```
 
 ### Customize the configuration
