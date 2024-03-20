@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { QTable, QTableProps, useQuasar } from 'quasar';
 import { Fairmodel, FairmodelVersion } from 'src/types';
+import { client } from 'src/utils/client';
 import { fairmodelApiService } from 'src/utils/fairmodel.api.service';
 import { fairmodelVersionApiService } from 'src/utils/fairmodelversion.api.service';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
@@ -184,10 +185,32 @@ const linkModelObject = ref<FairmodelVersion>();
 const dialogLinkModel = computed({
   get: () => linkModelObject.value !== undefined,
   set: (state: boolean) => linkModelObject.value = undefined // Always assume false when set directly
-})
-const actionLink = (version: FairmodelVersion) => {
+});
+const openLinkDialog = (version: FairmodelVersion) => {
   linkModelObject.value = {...version}
+
+  linkModelVariablesLoading.value = true;
+  fairmodelVersionApiService.getVariables(fairmodel.value!.id, version.id)
+    .then((vars) => {
+      linkModelVariables.value = vars.data.variables
+      linkModelVariablesLoading.value = false;
+    })
 }
+
+type FairmodelVersionVariable = Array<string>
+type FairmodelVersionVariables = {
+  input: {
+    metadata: FairmodelVersionVariable
+    raw: FairmodelVersionVariable
+  },
+  output: {
+    metadata: FairmodelVersionVariable
+    raw: FairmodelVersionVariable
+  },
+}
+const linkModelVariablesLoading = ref(false);
+const linkModelVariables = ref<FairmodelVersionVariables>();
+
 </script>
 
 <template>
@@ -258,26 +281,27 @@ const actionLink = (version: FairmodelVersion) => {
                   </template>
                 </q-field>
 
-                <q-field
-                  filled
-                  readonly
-                >
-                  <template v-slot:control>
-                    {{ getMetadataURL(viewMetadataObject.metadata_id) }}
-                  </template>
-                  <template v-slot:append>
-                    <q-btn
-                      :href="getMetadataURL(viewMetadataObject.metadata_id)"
-                      target="_blank"
-                      icon="open_in_new"
-                      round 
-                      flat
-                    />
-                  </template>
-                </q-field>
+                <div class="row no-wrap">
+                  <q-field
+                    filled
+                    readonly
+                  >
+                    <template v-slot:control>
+                      {{ getMetadataURL(viewMetadataObject.metadata_id) }}
+                    </template>
+                    <!-- <template v-slot:append>
+                    </template> -->
+                  </q-field>
+                  <q-btn
+                    class="self-center q-ml-md"
+                    :href="getMetadataURL(viewMetadataObject.metadata_id)"
+                    target="_blank"
+                    icon="open_in_new"
+                    round 
+                    flat
+                  />
+                </div>
               </div>
-
-              <div class="q-mt-md">Some more info here...</div>
             </q-card-section>
           </q-card>
         </q-dialog>
@@ -322,9 +346,13 @@ const actionLink = (version: FairmodelVersion) => {
             <q-card-section>
               <div class="text-h5">Link Model Features</div>
               
-              <div>In this dialog you can link input and output features of the set metadata and uploaded model.</div>.
+              <span>In this dialog you can link input and output features of the set metadata and uploaded model.</span>
 
-              <div>Model type: {{ viewModelObject?.model_type }}</div>
+              <div>Model type: {{ linkModelObject?.model_type }}</div>
+
+
+              <q-inner-loading :showing="linkModelVariablesLoading" />              
+              <pre>{{ linkModelVariables }}</pre>
             
               <q-btn class="q-mt-md" color="primary" label="Done"></q-btn>
             </q-card-section>

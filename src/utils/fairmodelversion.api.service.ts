@@ -27,5 +27,9 @@ export const fairmodelVersionApiService = {
 
     downloadModel(fairmodel_id: string, version_id: string) {
         return client.get(`/fairmodel/${fairmodel_id}/version/${version_id}/model`, { responseType: 'stream' })
+    },
+
+    getVariables(fairmodel_id: string, version_id: string) {
+        return client.get(`/fairmodel/${fairmodel_id}/version/${version_id}/variables`)
     }
 }
