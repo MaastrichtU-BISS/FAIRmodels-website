@@ -404,7 +404,7 @@ const linkModelVariables = ref<FairmodelVersionVariables>();
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
                   <!-- <q-btn size="sm" flat rounded icon="delete" @click="actionDelete(props.row)"></q-btn> -->
-                  <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="actionLink(props.row)">
+                  <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="openLinkDialog(props.row)">
                     <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Link fields
                     </q-tooltip>
