@@ -64,7 +64,7 @@ const tableOnRequest = async () => {
 const dialogCreateFairmodelVersion = ref(false);
 const newFairmodelVersionDefault = {
   update_description: '',
-  update_type: '',
+  update_type: 'patch',
 }
 const newFairmodelVersionData = ref({...newFairmodelVersionDefault});
 
@@ -166,7 +166,7 @@ const downloadViewModel = async () => {
   if (down.status == 200) {
     const blob = new Blob([down.data], { type: down.headers['content-type'] });
     const link = document.createElement('a');
-    link.download = `${fairmodel.value?.name.replace(/\s+/, '-')}-${viewModelObject.value!.version}.${viewModelObject.value!.model_type == 'ONNX' ? 'onnx' : 'pb'}`;
+    link.download = `${fairmodel.value?.name.replace(/\s+/, '-')}-${viewModelObject.value!.version}.${viewModelObject.value!.model_type == 'ONNX' ? 'onnx' : 'pmml'}`;
     link.href = window.URL.createObjectURL(blob);
     document.body.appendChild(link);
     link.click();
@@ -197,15 +197,23 @@ const openLinkDialog = (version: FairmodelVersion) => {
     })
 }
 
-type FairmodelVersionVariable = Array<string>
+type MetadataVariable = {
+  id: string,
+  name: string,
+  linked: ModelVariable['name'] | undefined
+}
+type ModelVariable = {
+  name: string,
+  type: object
+}
 type FairmodelVersionVariables = {
   input: {
-    metadata: FairmodelVersionVariable
-    raw: FairmodelVersionVariable
+    metadata: Array<MetadataVariable>
+    model: Array<ModelVariable>
   },
   output: {
-    metadata: FairmodelVersionVariable
-    raw: FairmodelVersionVariable
+    metadata: Array<MetadataVariable>
+    model: Array<ModelVariable>
   },
 }
 const linkModelVariablesLoading = ref(false);
@@ -289,8 +297,6 @@ const linkModelVariables = ref<FairmodelVersionVariables>();
                     <template v-slot:control>
                       {{ getMetadataURL(viewMetadataObject.metadata_id) }}
                     </template>
-                    <!-- <template v-slot:append>
-                    </template> -->
                   </q-field>
                   <q-btn
                     class="self-center q-ml-md"
@@ -342,19 +348,56 @@ const linkModelVariables = ref<FairmodelVersionVariables>();
         </q-dialog>
 
         <q-dialog v-model="dialogLinkModel">
-          <q-card style="width: 64rem">
+          <q-card style="min-width: 64rem">
             <q-card-section>
-              <div class="text-h5">Link Model Features</div>
+              <div class="text-h4">Link Model Features</div>
               
-              <span>In this dialog you can link input and output features of the set metadata and uploaded model.</span>
+              <p>In this dialog you can link input and output features of the set metadata and uploaded model.</p>
 
-              <div>Model type: {{ linkModelObject?.model_type }}</div>
+              <p class="mb-">Model type: <strong>{{ linkModelObject?.model_type }}</strong></p>
 
+              <template v-if="linkModelVariables">
+                <div class="text-h5">Input Variables</div>
+                <div
+                  class="q-pa-md q-mb-sm bg-blue-2"
+                  style="display: flex; align-items: start; border-radius: 3px;"
+                  v-for="(varMeta, i) of linkModelVariables.input.metadata" :key="varMeta.id"
+                >
+                  <span style="width: 50%">
+                    <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
+                    <span style="opacity: 0.5">{{ varMeta.id }}</span>
+                  </span>
+                  <q-select
+                    style="width: 50%"
+                    clearable filled
+                    v-model="linkModelVariables.input.metadata[i].linked"
+                    :options="linkModelVariables.input.model.map(x => x.name)"
+                  />
+                </div>
 
-              <q-inner-loading :showing="linkModelVariablesLoading" />              
-              <pre>{{ linkModelVariables }}</pre>
+                <div class="text-h5">Output Variables</div>
+
+                <div 
+                  class="q-pa-md q-mb-sm bg-blue-2"
+                  style="display: flex; align-items: start;"
+                  v-for="(varMeta, i) of linkModelVariables.output.metadata" :key="varMeta.id"
+                >
+                  <span style="width: 50%">
+                    <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
+                    <span style="opacity: 0.5">{{ varMeta.id }}</span>
+                  </span>
+                  <q-select
+                    style="width: 50%"
+                    clearable filled
+                    v-model="linkModelVariables.output.metadata[i].linked"
+                    :options="linkModelVariables.output.model.map(x => x.name)"
+                  />
+                </div>
+              </template>
             
               <q-btn class="q-mt-md" color="primary" label="Done"></q-btn>
+
+              <q-inner-loading :showing="linkModelVariablesLoading" />
             </q-card-section>
           </q-card>
         </q-dialog>
