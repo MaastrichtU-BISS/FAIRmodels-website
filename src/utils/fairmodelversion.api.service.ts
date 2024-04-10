@@ -1,3 +1,4 @@
+import { MetadataMappedLinks } from "src/types";
 import { client } from "./client"
 
 export const fairmodelVersionApiService = {
@@ -31,5 +32,9 @@ export const fairmodelVersionApiService = {
 
     getVariables(fairmodel_id: string, version_id: string) {
         return client.get(`/fairmodel/${fairmodel_id}/version/${version_id}/variables`)
+    },
+
+    saveLinks(fairmodel_id: string, version_id: string, links: {input: MetadataMappedLinks, output: MetadataMappedLinks}) {
+        return client.post(`/fairmodel/${fairmodel_id}/version/${version_id}/links`, {links})
     }
 }

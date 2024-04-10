@@ -25,3 +25,24 @@ export type FairmodelVersion = {
   model_type: 'ONNX' | 'PMML'
   // created_at: string
 }
+
+
+
+export type ModelVariable = {
+  name: string,
+  type: Record<string, any> // any object
+}
+export type MetadataVariableLink = {
+  name: ModelVariable['name'],
+  linked_dim_start: number,
+  linked_dim_end: number
+}
+export type MetadataVariable = {
+  id: string,
+  name: string,
+  linked_model_var?: MetadataVariableLink
+}
+export type MetadataMappedLinks = {
+  id: MetadataVariable['id'],
+  link: MetadataVariableLink
+}[]

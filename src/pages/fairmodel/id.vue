@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { QTable, QTableProps, useQuasar } from 'quasar';
-import { Fairmodel, FairmodelVersion } from 'src/types';
+import { Fairmodel, FairmodelVersion, MetadataMappedLinks, MetadataVariable, ModelVariable } from 'src/types';
 import { client } from 'src/utils/client';
 import { fairmodelApiService } from 'src/utils/fairmodel.api.service';
 import { fairmodelVersionApiService } from 'src/utils/fairmodelversion.api.service';
@@ -197,28 +197,63 @@ const openLinkDialog = (version: FairmodelVersion) => {
     })
 }
 
-type MetadataVariable = {
-  id: string,
-  name: string,
-  linked: ModelVariable['name'] | undefined
-}
-type ModelVariable = {
-  name: string,
-  type: object
+type VariableDirectionContainer = {
+  metadata: Array<MetadataVariable>
+  model: Array<ModelVariable>
 }
 type FairmodelVersionVariables = {
-  input: {
-    metadata: Array<MetadataVariable>
-    model: Array<ModelVariable>
-  },
-  output: {
-    metadata: Array<MetadataVariable>
-    model: Array<ModelVariable>
-  },
+  input: VariableDirectionContainer,
+  output: VariableDirectionContainer,
 }
 const linkModelVariablesLoading = ref(false);
 const linkModelVariables = ref<FairmodelVersionVariables>();
 
+const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
+  return computed({
+    get(): string | null {
+      return linkModelVariables.value![type].metadata[index].linked_model_var?.name ?? null;
+    },
+    set(value: string | null) {
+      if (!value) {
+        delete linkModelVariables.value![type].metadata[index].linked_model_var;
+      } else {
+        linkModelVariables.value![type].metadata[index].linked_model_var = {
+          name: value,
+          linked_dim_start: 1,
+          linked_dim_end: 1
+        }
+      }
+    }
+  });
+}
+
+const getLinkedModelVariable = (type: 'input' | 'output', index: number): ModelVariable | undefined => {
+  const model_name = linkModelVariables.value![type].metadata[index].linked_model_var?.name ?? undefined;
+  if (!model_name) return undefined;
+  return linkModelVariables.value![type].model.find(x => x.name == model_name)!;
+}
+
+const linkedModelVariableDimensions = (type: 'input' | 'output', index: number): number => {
+  const modelVariable = getLinkedModelVariable(type, index);
+  if (!modelVariable) return 0;
+  return modelVariable.type.tensorType?.shape?.dim
+    ? modelVariable.type.tensorType?.shape?.dim.length 
+    : 0
+}
+
+const saveModelVariableLinks = () => {
+  const mapLinks = (combination: VariableDirectionContainer): MetadataMappedLinks => {
+    return combination.metadata
+      .map(meta => ({id: meta.id, link: meta.linked_model_var}))
+      .filter(item => item.link) as MetadataMappedLinks
+  }
+
+  const links: {input: MetadataMappedLinks, output: MetadataMappedLinks} = {
+    input: mapLinks(linkModelVariables.value!.input),
+    output: mapLinks(linkModelVariables.value!.output)
+  }
+  fairmodelVersionApiService.saveLinks(fairmodel.value!.id, linkModelObject.value!.version, links)
+}
 </script>
 
 <template>
@@ -354,48 +389,75 @@ const linkModelVariables = ref<FairmodelVersionVariables>();
               
               <p>In this dialog you can link input and output features of the set metadata and uploaded model.</p>
 
+              <!-- <pre>{{linkModelVariables}}</pre> -->
+
               <p class="mb-">Model type: <strong>{{ linkModelObject?.model_type }}</strong></p>
 
               <template v-if="linkModelVariables">
-                <div class="text-h5">Input Variables</div>
-                <div
-                  class="q-pa-md q-mb-sm bg-blue-2"
-                  style="display: flex; align-items: start; border-radius: 3px;"
-                  v-for="(varMeta, i) of linkModelVariables.input.metadata" :key="varMeta.id"
-                >
-                  <span style="width: 50%">
-                    <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
-                    <span style="opacity: 0.5">{{ varMeta.id }}</span>
-                  </span>
-                  <q-select
-                    style="width: 50%"
-                    clearable filled
-                    v-model="linkModelVariables.input.metadata[i].linked"
-                    :options="linkModelVariables.input.model.map(x => x.name)"
-                  />
-                </div>
+                <template v-for="direction in (['input', 'output'] as const)" :key="direction">
+                  <div class="text-h5">{{ direction[0].toUpperCase() + direction.slice(1) }} variables</div>
+                  <div
+                    class="q-pa-md q-mb-sm bg-blue-2"
+                    style="display: flex; align-items: start; border-radius: 3px;"
+                    v-for="(varMeta, i) of linkModelVariables[direction].metadata" :key="varMeta.id"
+                  >
+                    <span style="width: 50%">
+                      <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
+                      <span style="opacity: 0.5">{{ varMeta.id }}</span>
+                    </span>
+                    <div style="width: 50%">
+                      <q-select
+                        style="width: 100%"
+                        clearable filled
+                        v-model="modelLinkedVarName(direction, i).value"
+                        :options="linkModelVariables[direction].model.map(x => x.name)"
+                      />
+                      <div v-if="linkedModelVariableDimensions(direction, i) > 1">
+                        <span style="display: block" class="q-my-sm">This variable has <strong>{{ linkedModelVariableDimensions(direction, i) }}</strong> dimensions. Select the correct index range of the dimensions corresponding to the variable:</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                          <q-input
+                            class="inline"
+                            filled
+                            v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start"
+                            :min="1"
+                            :max="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end ?? linkedModelVariableDimensions(direction, i)"
+                            type="number"
+                          />
+                          <span>untill</span>
+                          <q-input
+                            class="inline"
+                            filled
+                            v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end"
+                            :min="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start ?? 0"
+                            :max="linkedModelVariableDimensions(direction, i)"
+                            type="number"
+                          />
+                        </div>
 
-                <div class="text-h5">Output Variables</div>
-
-                <div 
-                  class="q-pa-md q-mb-sm bg-blue-2"
-                  style="display: flex; align-items: start;"
-                  v-for="(varMeta, i) of linkModelVariables.output.metadata" :key="varMeta.id"
-                >
-                  <span style="width: 50%">
-                    <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
-                    <span style="opacity: 0.5">{{ varMeta.id }}</span>
-                  </span>
-                  <q-select
-                    style="width: 50%"
-                    clearable filled
-                    v-model="linkModelVariables.output.metadata[i].linked"
-                    :options="linkModelVariables.output.model.map(x => x.name)"
-                  />
-                </div>
+                        <!-- doesn't work exactly
+                        <q-select
+                          class="inline" filled
+                          v-model="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start"
+                          use-input
+                          :options="Array(linkedModelVariableDimensions(direction, i)).fill(0).map((_, n) => ({value: n+1, label: n+1, disable: n+1 > linkModelVariables![direction].metadata[i].linked_model_var!.linked_dim_end}))"
+                        />
+                        <q-select
+                          class="inline" filled
+                          v-model="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end"
+                          use-input
+                          :options="Array(linkedModelVariableDimensions(direction, i)).fill(0).map((_, n) => ({value: n+1, label: n+1, disable: n+1 < linkModelVariables![direction].metadata[i].linked_model_var!.linked_dim_start}))"
+                        />
+                        -->
+                      </div>
+                      <div v-if="linkedModelVariableDimensions(direction, i) == 1">
+                        <span style="display: block" class="q-my-sm">This variable has 1 dimension.</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </template>
             
-              <q-btn class="q-mt-md" color="primary" label="Done"></q-btn>
+              <q-btn class="q-mt-md" color="primary" label="Save" @click="saveModelVariableLinks"></q-btn>
 
               <q-inner-loading :showing="linkModelVariablesLoading" />
             </q-card-section>
