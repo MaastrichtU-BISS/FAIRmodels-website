@@ -5,7 +5,7 @@ import { useQuasar } from 'quasar';
 import getRouter from '../router';
 
 const axiosOptions = {
-  baseURL: process.env.API_URL,
+  baseURL: (import.meta.env.DEV)? process.env.API_URL : 'https://api.fairmodels.org',
   validateStatus: () => true,
 }
 
@@ -39,7 +39,7 @@ client.interceptors.response.use(async (res) => {
     } catch (err) {
       refreshed = false;
       if (err instanceof Error) {
-        console.error("Error occured while refreshing token:", err)
+        console.error('Error occured while refreshing token:', err)
       }
     }
 
@@ -55,7 +55,7 @@ client.interceptors.response.use(async (res) => {
   }
   return res;
 }, (err) => {
-  console.error("AxiosError:", err)
+  console.error('AxiosError:', err)
   const $q = useQuasar()
   if ($q)
     $q.notify({type: 'negative', message: err.message})
