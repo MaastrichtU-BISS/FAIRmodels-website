@@ -34,8 +34,9 @@ export type ModelVariable = {
 }
 export type MetadataVariableLink = {
   name: ModelVariable['name'],
-  linked_dim_start: number,
-  linked_dim_end: number
+  linked_dim_index: number | undefined,
+  linked_dim_start: number | undefined,
+  linked_dim_end: number | undefined
 }
 export type MetadataVariable = {
   id: string,
@@ -43,6 +44,6 @@ export type MetadataVariable = {
   linked_model_var?: MetadataVariableLink
 }
 export type MetadataMappedLinks = {
-  id: MetadataVariable['id'],
+  metadata_id: MetadataVariable['id'],
   link: MetadataVariableLink
 }[]

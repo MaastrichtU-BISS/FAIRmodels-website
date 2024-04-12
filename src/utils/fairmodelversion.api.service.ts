@@ -35,6 +35,6 @@ export const fairmodelVersionApiService = {
     },
 
     saveLinks(fairmodel_id: string, version_id: string, links: {input: MetadataMappedLinks, output: MetadataMappedLinks}) {
-        return client.post(`/fairmodel/${fairmodel_id}/version/${version_id}/links`, {links})
+        return client.put(`/fairmodel/${fairmodel_id}/version/${version_id}/variables`, {links})
     }
 }

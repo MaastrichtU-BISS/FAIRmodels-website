@@ -207,6 +207,7 @@ type FairmodelVersionVariables = {
 }
 const linkModelVariablesLoading = ref(false);
 const linkModelVariables = ref<FairmodelVersionVariables>();
+const buttonSaveModelVariablesLinkLoading = ref(false);
 
 const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
   return computed({
@@ -219,40 +220,99 @@ const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
       } else {
         linkModelVariables.value![type].metadata[index].linked_model_var = {
           name: value,
-          linked_dim_start: 1,
-          linked_dim_end: 1
+          linked_dim_index: undefined,
+          linked_dim_start: undefined,
+          linked_dim_end: undefined
         }
       }
     }
   });
 }
 
-const getLinkedModelVariable = (type: 'input' | 'output', index: number): ModelVariable | undefined => {
-  const model_name = linkModelVariables.value![type].metadata[index].linked_model_var?.name ?? undefined;
-  if (!model_name) return undefined;
-  return linkModelVariables.value![type].model.find(x => x.name == model_name)!;
+const getMetadataVariable = (direction: 'input' | 'output', index: number): MetadataVariable | undefined => {
+  const metadata_var = linkModelVariables.value![direction].metadata[index];
+  return metadata_var;
 }
 
-const linkedModelVariableDimensions = (type: 'input' | 'output', index: number): number => {
-  const modelVariable = getLinkedModelVariable(type, index);
+const getLinkedModelVariable = (direction: 'input' | 'output', index: number): ModelVariable | undefined => {
+  const model_name = getMetadataVariable(direction, index)?.linked_model_var?.name
+  if (!model_name) return undefined;
+  return linkModelVariables.value![direction].model.find(x => x.name == model_name)!;
+}
+
+const linkedModelVariableAllDimensions = (direction: 'input' | 'output', index: number): number => {
+  const modelVariable = getLinkedModelVariable(direction, index);
   if (!modelVariable) return 0;
-  return modelVariable.type.tensorType?.shape?.dim
-    ? modelVariable.type.tensorType?.shape?.dim.length 
-    : 0
+  const fixedDims = modelVariable.type.tensorType?.shape?.dim.length;
+  return fixedDims ? fixedDims : 0;
+}
+
+const linkedModelVariableSizeOfDimension = (direction: 'input' | 'output', index: number, dimensionIdx?: number | undefined): number => {
+  const modelVariable = getLinkedModelVariable(direction, index);
+  if (modelVariable == undefined)
+    throw Error("Model variable could not be infered");
+  if (dimensionIdx == undefined)
+    dimensionIdx = getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_index;
+  if (dimensionIdx == undefined)
+    throw Error("Argument dimensionIdx was not provided and could not be inferred")
+
+  const dimValue = modelVariable.type?.tensorType?.shape?.dim[dimensionIdx].dimValue ?? 0;
+  return dimValue;
+}
+
+const linkedModelVariableFixedDimensions = (direction: 'input' | 'output', index: number): number => {
+  const modelVariable = getLinkedModelVariable(direction, index);
+  if (!modelVariable) return 0;
+  const fixedDims = (modelVariable.type.tensorType?.shape?.dim as Array<any>).filter(x => x.dimValue).length;
+  console.log(modelVariable.type.tensorType?.shape?.dim)
+  return fixedDims ? fixedDims : 0;
 }
 
 const saveModelVariableLinks = () => {
   const mapLinks = (combination: VariableDirectionContainer): MetadataMappedLinks => {
     return combination.metadata
-      .map(meta => ({id: meta.id, link: meta.linked_model_var}))
-      .filter(item => item.link) as MetadataMappedLinks
+      .map(meta => ({metadata_id: meta.id, link: meta.linked_model_var}))
+      .filter(item => item.link && Object.keys(item.link).length > 0) as MetadataMappedLinks
   }
 
   const links: {input: MetadataMappedLinks, output: MetadataMappedLinks} = {
     input: mapLinks(linkModelVariables.value!.input),
     output: mapLinks(linkModelVariables.value!.output)
   }
-  fairmodelVersionApiService.saveLinks(fairmodel.value!.id, linkModelObject.value!.version, links)
+  
+  buttonSaveModelVariablesLinkLoading.value = true;
+  fairmodelVersionApiService.saveLinks(fairmodel.value!.id, linkModelObject.value!.id, links)
+    .then(() => {
+      linkModelObject.value = undefined;
+      buttonSaveModelVariablesLinkLoading.value = false;
+      $q.notify({type: 'positive', message: "Successfully saved variable links"});
+    })
+}
+
+const dimensionOptions = (direction: 'input' | 'output', index: number) => {
+  return computed(() => {
+    const arr = Array(linkedModelVariableAllDimensions(direction, index))
+      .fill(0)
+      .map((_, n) => n);
+    
+    return arr.map(n => {
+      console.log("n is", n)
+      const dimSize = linkedModelVariableSizeOfDimension(direction, index, n);
+      return {
+        value: n, 
+        label: `Dimension ${n}` + (dimSize > 0 ? ` (has length ${dimSize})` : ''),
+        disable: dimSize == 0
+      }
+    })
+  })
+}
+
+const changeDimensionOption = (direction: 'input' | 'output', index: number) => {
+  console.log("TO DO")
+  if (getMetadataVariable(direction, index)?.linked_model_var?.linked_dim_index != undefined) {
+    getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_start = 0;
+    getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_end = 0;
+  }
 }
 </script>
 
@@ -389,8 +449,6 @@ const saveModelVariableLinks = () => {
               
               <p>In this dialog you can link input and output features of the set metadata and uploaded model.</p>
 
-              <!-- <pre>{{linkModelVariables}}</pre> -->
-
               <p class="mb-">Model type: <strong>{{ linkModelObject?.model_type }}</strong></p>
 
               <template v-if="linkModelVariables">
@@ -412,15 +470,21 @@ const saveModelVariableLinks = () => {
                         v-model="modelLinkedVarName(direction, i).value"
                         :options="linkModelVariables[direction].model.map(x => x.name)"
                       />
-                      <div v-if="linkedModelVariableDimensions(direction, i) > 1">
-                        <span style="display: block" class="q-my-sm">This variable has <strong>{{ linkedModelVariableDimensions(direction, i) }}</strong> dimensions. Select the correct index range of the dimensions corresponding to the variable:</span>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <div v-if="linkedModelVariableFixedDimensions(direction, i) > 0">
+                        <span style="display: block" class="q-my-sm">This variable has <strong>{{ linkedModelVariableFixedDimensions(direction, i) }}</strong> dimensions with fixed length. Specify to which dimension and indices of this dimension this variable corresponds:</span>
+                        <q-select
+                          v-model="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index"
+                          :options="dimensionOptions(direction, i).value"
+                          emit-value
+                          @update:model-value="changeDimensionOption(direction, i)"
+                        />
+                        <div v-if="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index" class="q-mt-sm" style="display: flex; justify-content: space-between; align-items: center;">
                           <q-input
                             class="inline"
                             filled
                             v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start"
-                            :min="1"
-                            :max="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end ?? linkedModelVariableDimensions(direction, i)"
+                            :min="0"  
+                            :max="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end ?? (linkedModelVariableSizeOfDimension(direction, i) - 1)"
                             type="number"
                           />
                           <span>untill</span>
@@ -429,7 +493,7 @@ const saveModelVariableLinks = () => {
                             filled
                             v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end"
                             :min="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start ?? 0"
-                            :max="linkedModelVariableDimensions(direction, i)"
+                            :max="(linkedModelVariableSizeOfDimension(direction, i) - 1)"
                             type="number"
                           />
                         </div>
@@ -449,8 +513,8 @@ const saveModelVariableLinks = () => {
                         />
                         -->
                       </div>
-                      <div v-if="linkedModelVariableDimensions(direction, i) == 1">
-                        <span style="display: block" class="q-my-sm">This variable has 1 dimension.</span>
+                      <div v-if="modelLinkedVarName(direction, i).value && linkedModelVariableFixedDimensions(direction, i) == 0">
+                        <span style="display: block" class="q-my-sm">This variable has no fixed dimensions.</span>
                       </div>
                     </div>
                   </div>
