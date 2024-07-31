@@ -113,7 +113,7 @@ const refreshTable = () => {
         <SetFairmodelMetadataDialog
           v-model="dialogSetMetadataVersionId"
           :fairmodelId="fairmodel.id"
-          @update="refreshTable"
+          @update="refreshTable()"
         />
 
         <ViewFairmodelMetadataDialog
