@@ -21,11 +21,10 @@ const downloadLoading = ref(false);
 const downloadViewModel = async () => {
   downloadLoading.value = true;
   const down = await fairmodelVersionApiService.downloadModel(props.fairmodel.id, viewModelObject.value!.id);
-  if (down.status == 200) {
-    const blob = new Blob([down.data], { type: down.headers['content-type'] });
+  if (down.status === 200 && down.data) {
     const link = document.createElement('a');
     link.download = `${props.fairmodel.name.replace(/\s+/, '-')}-${viewModelObject.value!.version}.${viewModelObject.value!.model_type == 'ONNX' ? 'onnx' : 'pmml'}`;
-    link.href = window.URL.createObjectURL(blob);
+    link.href = window.URL.createObjectURL(down.data);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
