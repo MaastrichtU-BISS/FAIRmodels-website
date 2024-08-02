@@ -113,8 +113,8 @@ const updateDimensionSize = (bound: 'start' | 'end', direction: 'input' | 'outpu
 const linkedModelVariableFixedDimensions = (direction: 'input' | 'output', index: number): number => {
   const modelVariable = getLinkedModelVariable(direction, index);
   if (!modelVariable) return 0;
-  const fixedDims = (modelVariable.type.tensorType?.shape?.dim as Array<any>).filter(x => x.dimValue).length;
-  console.log(modelVariable.type.tensorType?.shape?.dim)
+  if (!modelVariable.type.tensorType) return 0;
+  const fixedDims = (modelVariable.type.tensorType.shape?.dim as Array<any>).filter(x => x.dimValue).length;
   return fixedDims ? fixedDims : 0;
 }
 
