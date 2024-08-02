@@ -98,6 +98,18 @@ const linkedModelVariableSizeOfDimension = (direction: 'input' | 'output', index
   return dimValue;
 }
 
+const updateDimensionSize = (bound: 'start' | 'end', direction: 'input' | 'output', i: number, e: any) => {
+  if (!linkModelVariables.value) throw Error("linkModelVariables not defined")
+  
+  if (bound == 'start') {
+    if (e > linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_end!)
+      linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_end = e;
+  } else if (bound == 'end') {
+    if (e < linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_start!)
+      linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_start = e;
+  }
+}
+
 const linkedModelVariableFixedDimensions = (direction: 'input' | 'output', index: number): number => {
   const modelVariable = getLinkedModelVariable(direction, index);
   if (!modelVariable) return 0;
@@ -196,8 +208,9 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                       class="inline"
                       filled
                       v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start"
+                      @update:model-value="e => updateDimensionSize('start', direction, i, e)"
                       :min="0"  
-                      :max="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end ?? (linkedModelVariableSizeOfDimension(direction, i) - 1)"
+                      :max="(linkedModelVariableSizeOfDimension(direction, i) - 1)"
                       type="number"
                     />
                     <span>untill</span>
@@ -205,7 +218,8 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                       class="inline"
                       filled
                       v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end"
-                      :min="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start ?? 0"
+                      @update:model-value="e => updateDimensionSize('end', direction, i, e)"
+                      :min="0"
                       :max="(linkedModelVariableSizeOfDimension(direction, i) - 1)"
                       type="number"
                     />
