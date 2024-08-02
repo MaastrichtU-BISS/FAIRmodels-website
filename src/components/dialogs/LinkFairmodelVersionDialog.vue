@@ -47,16 +47,16 @@ const linkModelVariablesLoading = ref(false);
 const linkModelVariables = ref<FairmodelVersionVariables>();
 const buttonSaveModelVariablesLinkLoading = ref(false);
 
-const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
+const modelLinkedVarName = (direction: 'input' | 'output', index: number) => {
   return computed({
     get(): string | null {
-      return linkModelVariables.value![type].metadata[index].linked_model_var?.name ?? null;
+      return linkModelVariables.value![direction].metadata[index].linked_model_var?.name ?? null;
     },
     set(value: string | null) {
       if (!value) {
-        delete linkModelVariables.value![type].metadata[index].linked_model_var;
+        delete linkModelVariables.value![direction].metadata[index].linked_model_var;
       } else {
-        linkModelVariables.value![type].metadata[index].linked_model_var = {
+        linkModelVariables.value![direction].metadata[index].linked_model_var = {
           name: value,
           linked_dim_index: undefined,
           linked_dim_start: undefined,
