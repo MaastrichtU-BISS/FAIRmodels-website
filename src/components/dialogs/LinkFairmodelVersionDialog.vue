@@ -44,7 +44,10 @@ type FairmodelVersionVariables = {
   output: VariableDirectionContainer,
 }
 const linkModelVariablesLoading = ref(false);
-const linkModelVariables = ref<FairmodelVersionVariables>();
+const linkModelVariables = ref<FairmodelVersionVariables>({
+  input: {metadata: [], model: []},
+  output: {metadata: [], model: []}
+});
 const buttonSaveModelVariablesLinkLoading = ref(false);
 
 const modelLinkedVarName = (direction: 'input' | 'output', index: number) => {
@@ -70,7 +73,9 @@ const modelLinkedVarName = (direction: 'input' | 'output', index: number) => {
 const updateModelLinkedVarName = (direction: 'input' | 'output', i: number) => {
   const options = dimensionOptions(direction, i).value.filter(x => !x.disable);
   if (options.length > 0) {
-    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_index = options[0].value
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_index = options[0].value;
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_start = 0;
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_end = 0;
   }
 }
 
@@ -139,10 +144,14 @@ const saveModelVariableLinks = () => {
   
   buttonSaveModelVariablesLinkLoading.value = true;
   fairmodelVersionApiService.saveLinks(props.fairmodelId, linkModelObject.value!.id, links)
-    .then(() => {
-      linkModelObject.value = undefined;
-      buttonSaveModelVariablesLinkLoading.value = false;
-      $q.notify({type: 'positive', message: "Successfully saved variable links"});
+    .then((res) => {
+      if (res.status >= 200 && res.status <= 299) {
+        linkModelObject.value = undefined;
+        buttonSaveModelVariablesLinkLoading.value = false;
+        $q.notify({type: 'positive', message: "Successfully saved variable links"});
+      } else {
+        $q.notify({type: 'negative', message: "Something went wrong!"})
+      }
     })
 }
 
@@ -153,7 +162,6 @@ const dimensionOptions = (direction: 'input' | 'output', index: number) => {
       .map((_, n) => n);
     
     return arr.map(n => {
-      console.log("n is", n)
       const dimSize = linkedModelVariableSizeOfDimension(direction, index, n);
       return {
         value: n, 
