@@ -67,6 +67,13 @@ const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
   });
 }
 
+const updateModelLinkedVarName = (direction: 'input' | 'output', i: number) => {
+  const options = dimensionOptions(direction, i).value.filter(x => !x.disable);
+  if (options.length > 0) {
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_index = options[0].value
+  }
+}
+
 const getMetadataVariable = (direction: 'input' | 'output', index: number): MetadataVariable | undefined => {
   const metadata_var = linkModelVariables.value![direction].metadata[index];
   return metadata_var;
@@ -193,6 +200,7 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                   style="width: 100%"
                   clearable filled
                   v-model="modelLinkedVarName(direction, i).value"
+                  @update:model-value="updateModelLinkedVarName(direction, i)"
                   :options="linkModelVariables[direction].model.map(x => x.name)"
                 />
                 <div v-if="linkedModelVariableFixedDimensions(direction, i) > 0">
