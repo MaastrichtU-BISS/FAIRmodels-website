@@ -164,8 +164,7 @@ const dimensionOptions = (direction: 'input' | 'output', index: number) => {
   })
 }
 
-const changeDimensionOption = (direction: 'input' | 'output', index: number) => {
-  console.log("TO DO")
+const updateDimensionOption = (direction: 'input' | 'output', index: number) => {
   if (getMetadataVariable(direction, index)?.linked_model_var?.linked_dim_index != undefined) {
     getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_start = 0;
     getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_end = 0;
@@ -209,7 +208,7 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                     v-model="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index"
                     :options="dimensionOptions(direction, i).value"
                     emit-value
-                    @update:model-value="changeDimensionOption(direction, i)"
+                    @update:model-value="updateDimensionOption(direction, i)"
                   />
                   <div v-if="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index" class="q-mt-sm" style="display: flex; justify-content: space-between; align-items: center;">
                     <q-input
