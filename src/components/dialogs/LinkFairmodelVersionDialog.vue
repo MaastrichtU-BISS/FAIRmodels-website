@@ -44,19 +44,22 @@ type FairmodelVersionVariables = {
   output: VariableDirectionContainer,
 }
 const linkModelVariablesLoading = ref(false);
-const linkModelVariables = ref<FairmodelVersionVariables>();
+const linkModelVariables = ref<FairmodelVersionVariables>({
+  input: {metadata: [], model: []},
+  output: {metadata: [], model: []}
+});
 const buttonSaveModelVariablesLinkLoading = ref(false);
 
-const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
+const modelLinkedVarName = (direction: 'input' | 'output', index: number) => {
   return computed({
     get(): string | null {
-      return linkModelVariables.value![type].metadata[index].linked_model_var?.name ?? null;
+      return linkModelVariables.value![direction].metadata[index].linked_model_var?.name ?? null;
     },
     set(value: string | null) {
       if (!value) {
-        delete linkModelVariables.value![type].metadata[index].linked_model_var;
+        delete linkModelVariables.value![direction].metadata[index].linked_model_var;
       } else {
-        linkModelVariables.value![type].metadata[index].linked_model_var = {
+        linkModelVariables.value![direction].metadata[index].linked_model_var = {
           name: value,
           linked_dim_index: undefined,
           linked_dim_start: undefined,
@@ -65,6 +68,15 @@ const modelLinkedVarName = (type: 'input' | 'output', index: number) => {
       }
     }
   });
+}
+
+const updateModelLinkedVarName = (direction: 'input' | 'output', i: number) => {
+  const options = dimensionOptions(direction, i).value.filter(x => !x.disable);
+  if (options.length > 0) {
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_index = options[0].value;
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_start = 0;
+    linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_end = 0;
+  }
 }
 
 const getMetadataVariable = (direction: 'input' | 'output', index: number): MetadataVariable | undefined => {
@@ -98,11 +110,23 @@ const linkedModelVariableSizeOfDimension = (direction: 'input' | 'output', index
   return dimValue;
 }
 
+const updateDimensionSize = (bound: 'start' | 'end', direction: 'input' | 'output', i: number, e: any) => {
+  if (!linkModelVariables.value) throw Error("linkModelVariables not defined")
+  
+  if (bound == 'start') {
+    if (e > linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_end!)
+      linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_end = e;
+  } else if (bound == 'end') {
+    if (e < linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_start!)
+      linkModelVariables.value[direction].metadata[i].linked_model_var!.linked_dim_start = e;
+  }
+}
+
 const linkedModelVariableFixedDimensions = (direction: 'input' | 'output', index: number): number => {
   const modelVariable = getLinkedModelVariable(direction, index);
   if (!modelVariable) return 0;
-  const fixedDims = (modelVariable.type.tensorType?.shape?.dim as Array<any>).filter(x => x.dimValue).length;
-  console.log(modelVariable.type.tensorType?.shape?.dim)
+  if (!modelVariable.type.tensorType) return 0;
+  const fixedDims = (modelVariable.type.tensorType.shape?.dim as Array<any>).filter(x => x.dimValue).length;
   return fixedDims ? fixedDims : 0;
 }
 
@@ -120,10 +144,14 @@ const saveModelVariableLinks = () => {
   
   buttonSaveModelVariablesLinkLoading.value = true;
   fairmodelVersionApiService.saveLinks(props.fairmodelId, linkModelObject.value!.id, links)
-    .then(() => {
-      linkModelObject.value = undefined;
-      buttonSaveModelVariablesLinkLoading.value = false;
-      $q.notify({type: 'positive', message: "Successfully saved variable links"});
+    .then((res) => {
+      if (res.status >= 200 && res.status <= 299) {
+        linkModelObject.value = undefined;
+        buttonSaveModelVariablesLinkLoading.value = false;
+        $q.notify({type: 'positive', message: "Successfully saved variable links"});
+      } else {
+        $q.notify({type: 'negative', message: "Something went wrong!"})
+      }
     })
 }
 
@@ -134,7 +162,6 @@ const dimensionOptions = (direction: 'input' | 'output', index: number) => {
       .map((_, n) => n);
     
     return arr.map(n => {
-      console.log("n is", n)
       const dimSize = linkedModelVariableSizeOfDimension(direction, index, n);
       return {
         value: n, 
@@ -145,8 +172,7 @@ const dimensionOptions = (direction: 'input' | 'output', index: number) => {
   })
 }
 
-const changeDimensionOption = (direction: 'input' | 'output', index: number) => {
-  console.log("TO DO")
+const updateDimensionOption = (direction: 'input' | 'output', index: number) => {
   if (getMetadataVariable(direction, index)?.linked_model_var?.linked_dim_index != undefined) {
     getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_start = 0;
     getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_end = 0;
@@ -181,6 +207,7 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                   style="width: 100%"
                   clearable filled
                   v-model="modelLinkedVarName(direction, i).value"
+                  @update:model-value="updateModelLinkedVarName(direction, i)"
                   :options="linkModelVariables[direction].model.map(x => x.name)"
                 />
                 <div v-if="linkedModelVariableFixedDimensions(direction, i) > 0">
@@ -189,15 +216,16 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                     v-model="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index"
                     :options="dimensionOptions(direction, i).value"
                     emit-value
-                    @update:model-value="changeDimensionOption(direction, i)"
+                    @update:model-value="updateDimensionOption(direction, i)"
                   />
                   <div v-if="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index" class="q-mt-sm" style="display: flex; justify-content: space-between; align-items: center;">
                     <q-input
                       class="inline"
                       filled
                       v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start"
+                      @update:model-value="e => updateDimensionSize('start', direction, i, e)"
                       :min="0"  
-                      :max="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end ?? (linkedModelVariableSizeOfDimension(direction, i) - 1)"
+                      :max="(linkedModelVariableSizeOfDimension(direction, i) - 1)"
                       type="number"
                     />
                     <span>untill</span>
@@ -205,7 +233,8 @@ const changeDimensionOption = (direction: 'input' | 'output', index: number) => 
                       class="inline"
                       filled
                       v-model.number="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_end"
-                      :min="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_start ?? 0"
+                      @update:model-value="e => updateDimensionSize('end', direction, i, e)"
+                      :min="0"
                       :max="(linkedModelVariableSizeOfDimension(direction, i) - 1)"
                       type="number"
                     />

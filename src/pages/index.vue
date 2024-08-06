@@ -4,7 +4,7 @@
 <template>
   <q-page>
     <div class="row justify-center q-mt-xl">
-      <div class="col-md-6">
+      <div class="col-md-6"  style="width: 90%">
         <h4 class="text-bold q-mt-md q-mb-lg">Welcome to FAIRmodels / FAIR4AI</h4>
         <div class="text-subtitle1">Select what you want to do below</div>
         
