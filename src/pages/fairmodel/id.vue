@@ -102,7 +102,7 @@ const refreshTable = () => {
 <template>
   <q-page v-if="fairmodel">
     <div class="row justify-center q-mt-xl">
-      <div class="col-md-6">
+      <div class="col-10 col-lg-8 col-xl-6">
         <h4 class="text-bold q-mt-mxd q-mb-lg">Fairmodel {{ fairmodel.name }}</h4>
 
         <q-btn color="primary" label="New Version" @click="showDialogCreateFairmodelVersion()" />
