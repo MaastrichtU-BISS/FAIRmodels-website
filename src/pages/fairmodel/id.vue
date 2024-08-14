@@ -12,6 +12,9 @@ import ViewFairmodelMetadataDialog from 'src/components/dialogs/ViewFairmodelMet
 import SetFairmodelModelDialog from 'src/components/dialogs/SetFairmodelModelDialog.vue';
 import ViewFairmodelModelDialog from 'src/components/dialogs/ViewFairmodelModelDialog.vue'
 import LinkFairmodelVersionDialog from 'src/components/dialogs/LinkFairmodelVersionDialog.vue';
+import { EXECUTOR_BASE_URL } from 'src/constants';
+
+import { symOutlinedPlayCircle } from '@quasar/extras/material-symbols-outlined'
 
 const $q = useQuasar()
 const route = useRoute();
@@ -193,6 +196,11 @@ const refreshTable = () => {
                   <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="showDialogLink(props.row)">
                     <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Link fields
+                    </q-tooltip>
+                  </q-btn>
+                  <q-btn size="md" flat rounded :icon="symOutlinedPlayCircle" color="indigo-7" :href="`${EXECUTOR_BASE_URL}/${props.row.id}`" target="_blank">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
+                      Execute
                     </q-tooltip>
                   </q-btn>
                 </q-td>
