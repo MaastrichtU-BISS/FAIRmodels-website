@@ -62,7 +62,7 @@ onMounted(() => {
 
 const table = reactive({
   columns: [
-    {name: 'id', label: 'Id', field: (row: Fairmodel) => row.id, align: 'left' },
+    {name: 'id', label: 'Id', field: (row: Fairmodel) => `${row.id.substring(0, 8)}...`, align: 'left', style: 'width: 1%; whitespace: nowrap' },
     {name: 'name', label: 'Name', field: (row: Fairmodel) => row.name, align: 'left' },
     {name: 'desc', label: 'Description', field: (row: Fairmodel) => row.description, align: 'left' },
     {name: 'actions', label: 'Actions', align: 'right' },

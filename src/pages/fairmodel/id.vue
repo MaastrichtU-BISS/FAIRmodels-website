@@ -35,7 +35,7 @@ onMounted(async () => {
 
 const table = reactive({
   columns: [
-    {name: 'id', label: 'Id', field: (row: FairmodelVersion) => row.id, align: 'left' },
+    {name: 'id', label: 'Id', field: (row: FairmodelVersion) => `${row.id.substring(0, 8)}...`, align: 'left', style: 'width: 1%; whitespace: nowrap' },
     {name: 'version', label: 'Name', field: (row: FairmodelVersion) => row.version, align: 'left' },
     {name: 'update_desc', label: 'Update Description', field: (row: FairmodelVersion) => row.update_description, align: 'left' },
     {name: 'metadata', label: 'Cedar Metadata ID', field: (row: FairmodelVersion) => row.metadata_id == null ? 'false' : row.metadata_id, align: 'center' },
