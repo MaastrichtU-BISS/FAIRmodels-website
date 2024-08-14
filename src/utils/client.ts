@@ -3,9 +3,10 @@ import jwt, { jwtService } from './jwt.service';
 import { authService } from './auth.service';
 import { useQuasar } from 'quasar';
 import getRouter from '../router';
+import { API_BASE_URL } from 'src/constants';
 
 const axiosOptions = {
-  baseURL: (import.meta.env.DEV)? process.env.API_URL : 'https://api.fairmodels.org',
+  baseURL: API_BASE_URL,
   validateStatus: () => true,
 }
 
