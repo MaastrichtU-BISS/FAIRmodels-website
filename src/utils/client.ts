@@ -3,10 +3,11 @@ import jwt, { jwtService } from './jwt.service';
 import { authService } from './auth.service';
 import { useQuasar } from 'quasar';
 import getRouter from '../router';
+import { API_BASE_URL } from 'src/constants';
 
 const axiosOptions = {
-  baseURL: (import.meta.env.DEV)? process.env.API_URL : 'https://api.fairmodels.org',
-  validateStatus: () => true,
+  baseURL: API_BASE_URL,
+  validateStatus: () => true
 }
 
 export const authClient = axios.create(axiosOptions);
@@ -56,14 +57,5 @@ client.interceptors.response.use(async (res) => {
   return res;
 }, (err) => {
   console.error('AxiosError:', err)
-  const $q = useQuasar()
-  if ($q)
-    $q.notify({type: 'negative', message: err.message})
+  return Promise.reject(err)
 })
-
-// export client = client;
-// export const getClient = () => {
-//   return client;
-// }
-
-// export default getClient

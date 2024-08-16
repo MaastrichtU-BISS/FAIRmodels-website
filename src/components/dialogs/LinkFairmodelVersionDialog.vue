@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import { FairmodelVersion, MetadataMappedLinks, MetadataVariable, ModelVariable } from 'src/types';
+import { FairmodelVersion, MetadataMappedLinks, MetadataVariable, MetadataVariableMetadata, ModelVariable, VariableMetadataCategories } from 'src/types';
 import { fairmodelVersionApiService } from 'src/utils/fairmodelversion.api.service';
 import { computed, ref, watch } from 'vue';
 
@@ -133,7 +133,11 @@ const linkedModelVariableFixedDimensions = (direction: 'input' | 'output', index
 const saveModelVariableLinks = () => {
   const mapLinks = (combination: VariableDirectionContainer): MetadataMappedLinks => {
     return combination.metadata
-      .map(meta => ({metadata_id: meta.id, link: meta.linked_model_var}))
+      .map(metavar => ({
+        metadata_id: metavar.id,
+        link: metavar.linked_model_var,
+        meta: metavar.meta
+      }))
       .filter(item => item.link && Object.keys(item.link).length > 0) as MetadataMappedLinks
   }
 
@@ -178,34 +182,215 @@ const updateDimensionOption = (direction: 'input' | 'output', index: number) => 
     getMetadataVariable(direction, index)!.linked_model_var!.linked_dim_end = 0;
   }
 }
+
+const updateVariableType = (direction: 'input' | 'output', i: number, type: MetadataVariableMetadata['type']) => {
+  if (type == undefined) {
+    linkModelVariables.value[direction].metadata[i].meta = undefined;
+  } else if (type == 'CATEGORICAL') {
+    linkModelVariables.value[direction].metadata[i].meta = {
+      type: 'CATEGORICAL',
+      categories: {},
+    }
+  } else if (type == 'NUMERICAL') {
+    linkModelVariables.value[direction].metadata[i].meta = {
+      type: 'NUMERICAL',
+      unit: '',
+    }
+  }
+}
+
+const isVariableConfigured = computed(() => (direction: 'input' | 'output', i: number) => {
+  if (!linkModelVariables.value[direction].metadata[i].meta)
+    return false;
+
+  if (!linkModelVariables.value[direction].metadata[i].linked_model_var)
+    return false;
+
+  return true;
+})
+
+// type MappedCategory = {
+//   name: string,
+//   value: string,
+// }
+
+type VariableDirection = 'input' | 'output'
+type VariableKey = `${VariableDirection}_${number}`
+
+const newCategoryCache = ref<Record<VariableKey, {name: string | undefined, value: string | undefined}>>({});
+
+// const getNewCategoryField = computed(() => (variable: VaribleKey) => ({
+//   get: () => {
+//     if (variable in newCategoryField.value) {
+//       return newCategoryField.value[variable];
+//     } else {
+//       return {key: null, value: null}
+//     }
+//   },
+//   set: (value: string) => {
+//     console.log("SETTING", value)
+//   }
+// }))
+
+const getNewCategory = computed(() => (varkey: VariableKey) => {
+  return {
+    name: undefined,
+    value: undefined,
+    ...newCategoryCache.value[varkey] ?? {},
+  }
+})
+
+const setNewCategory = (varkey: VariableKey, obj: {name?: string | undefined, value?: string | undefined}) => {
+  newCategoryCache.value[varkey] = {
+    ...newCategoryCache.value[varkey],
+    ...obj
+  }
+}
+
+const addNewCategory = (direction: 'input' | 'output', i: number) => {
+  if (linkModelVariables.value[direction].metadata[i].meta?.type == 'CATEGORICAL') {
+    const obj = newCategoryCache.value[`${direction}_${i}`]
+    if (obj.name === undefined || obj.name == '') {
+      $q.notify({type: 'negative', message: 'Name cannot be empty'});
+      return false;
+    }
+    if (obj.value === undefined || obj.value == '') {
+      $q.notify({type: 'negative', message: 'Value cannot be empty'});
+      return false;
+    }
+
+    if (isNaN(Number(obj.value))) {
+      $q.notify({type: 'negative', message: 'Value must be a number'});
+      return false;
+    }
+
+    linkModelVariables.value[direction].metadata[i].meta.categories[obj.name] = +obj.value
+
+    delete newCategoryCache.value[`${direction}_${i}`];
+  }
+}
+
+const deleteCategory = (direction: 'input' | 'output', i: number, name: string) => {
+  if (confirm('Are you sure you want to remove this category?')) {
+    if (linkModelVariables.value[direction].metadata[i].meta?.type == 'CATEGORICAL')
+      delete linkModelVariables.value[direction].metadata[i].meta.categories[name]
+  }
+}
+
 </script>
 
 <template>
-  <q-dialog v-model="dialogLinkModel">
+  <q-dialog v-model="dialogLinkModel" no-esc-dismiss no-backdrop-dismiss>
     <q-card style="min-width: 64rem">
       <q-card-section>
         <div class="text-h4">Link Model Features</div>
         
         <p>In this dialog you can link input and output features of the set metadata and uploaded model.</p>
 
-        <p class="mb-">Model type: <strong>{{ linkModelObject?.model_type }}</strong></p>
+        <p>Model type: <strong>{{ linkModelObject?.model_type }}</strong></p>
 
         <template v-if="linkModelVariables">
           <template v-for="direction in (['input', 'output'] as const)" :key="direction">
-            <div class="text-h5">{{ direction[0].toUpperCase() + direction.slice(1) }} variables</div>
+            <div class="text-h5 q-mb-md">{{ direction[0].toUpperCase() + direction.slice(1) }} variables</div>
+            <div style="display: flex; border-radius: 3px;" class="text-weight-medium bg-grey-4 q-mb-sm">
+              <span style="width: 50%;" class="q-px-md q-py-sm">Metadata</span>
+              <span style="width: 50%;" class="q-px-md q-py-sm">Model</span>
+            </div>
             <div
-              class="q-pa-md q-mb-sm bg-blue-2"
-              style="display: flex; align-items: start; border-radius: 3px;"
+              class="q-mb-sm row"
+              :class="isVariableConfigured(direction, i) ? 'bg-green-1' : 'aaabg-amber-2 bg-grey-2'"
               v-for="(varMeta, i) of linkModelVariables[direction].metadata" :key="varMeta.id"
             >
-              <span style="width: 50%">
-                <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
-                <span style="opacity: 0.5">{{ varMeta.id }}</span>
-              </span>
-              <div style="width: 50%">
+              <div class="col q-pa-md" style="border-right: 2px solid rgba(0, 0, 0, 0.1);">
+                <div>
+                  <span style="display: block; font-weight: 700;">{{ varMeta.name }}</span>
+                  <span style="opacity: 0.5">{{ varMeta.id }}</span>
+                </div>
+                <div class="q-mt-md">
+                  <q-btn-toggle
+                    :model-value="linkModelVariables[direction].metadata[i].meta?.type ?? undefined"
+                    @update:model-value="(v) => updateVariableType(direction, i, v)"
+                    toggle-color="blue-grey-10"
+                    color="blue-grey-5"
+                    no-caps
+                    clearable
+                    :options="[
+                      {label: 'Categorical', value: 'CATEGORICAL'},
+                      {label: 'Numerical', value: 'NUMERICAL'}
+                    ]"
+                  />
+                  <div v-if="!linkModelVariables[direction].metadata[i].meta">
+                    <p class="q-my-md text-caption">Select a data-type for this variable</p>
+                  </div>
+                  <div v-else-if="linkModelVariables[direction].metadata[i].meta.type == 'CATEGORICAL'">
+                    <p class="q-my-md text-caption">Specify the categories for this categorical variable:</p>
+                    <!--<q-select
+                      label="Categories"
+                      filled dense
+                      v-model="linkModelVariables[direction].metadata[i].meta.categories"
+                      use-input
+                      use-chips
+                      multiple
+                      hide-dropdown-icon
+                      input-debounce="0"
+                      new-value-mode="add-unique"
+                    />
+                    -->
+                    <!-- <div
+                      v-for="[category_key, category_value] in Object.entries(linkModelVariables[direction].metadata[i].meta.categories)"
+                      :key="category_key"
+                      class="q-mx-sm q-mb-sm q-px-sm q-py-xs bg-red-8"
+                    >
+                      <span style="min-width: 20%; display: inline-block;">{{ category_key }}:</span><span>{{ category_value }}</span>
+                    </div> -->
+                    <table class="category-table q-my-sm">
+                      <tbody>
+                        <tr
+                          v-for="[category_name, category_value] in Object.entries(linkModelVariables[direction].metadata[i].meta.categories)"
+                          :key="category_name"
+                        >
+                          <th class="category-name">{{ category_name }}</th>
+                          <td class="category-value">{{ category_value }}</td>
+                          <td class="category-actions"><q-btn flat dense round @click="deleteCategory(direction, i, category_name)">&times;</q-btn></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style="display: flex; align-items: center;">
+                      <q-input
+                        class=""
+                        label="Name"
+                        filled dense
+                        :model-value="getNewCategory(`${direction}_${i}`).name"
+                        @update:model-value="e => setNewCategory(`${direction}_${i}`, {name: e as string})"
+                        @keydown.enter="addNewCategory(direction, i)"
+                      />
+                      <q-input
+                        class="q-ml-sm"
+                        label="Value"
+                        filled dense
+                        AAA-type="number"
+                        :model-value="getNewCategory(`${direction}_${i}`).value"
+                        @update:model-value="e => setNewCategory(`${direction}_${i}`, {value: (e as string) ?? undefined})"
+                        @keydown.enter="addNewCategory(direction, i)"
+                      />
+                      <q-btn class="q-ml-sm" @click="addNewCategory(direction, i)">Add</q-btn>
+                    </div>
+                  </div>
+                  <div v-else-if="linkModelVariables[direction].metadata[i].meta.type == 'NUMERICAL'">
+                    <p class="q-my-md text-caption">Specify the unit for this numerical variable:</p>
+                    <q-input
+                      label="Unit"
+                      filled dense
+                      v-model="linkModelVariables[direction].metadata[i].meta.unit"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="col q-pa-md">
                 <q-select
                   style="width: 100%"
                   clearable filled
+                  label="Model variable"
                   v-model="modelLinkedVarName(direction, i).value"
                   @update:model-value="updateModelLinkedVarName(direction, i)"
                   :options="linkModelVariables[direction].model.map(x => x.name)"
@@ -213,6 +398,7 @@ const updateDimensionOption = (direction: 'input' | 'output', index: number) => 
                 <div v-if="linkedModelVariableFixedDimensions(direction, i) > 0">
                   <span style="display: block" class="q-my-sm">This variable has <strong>{{ linkedModelVariableFixedDimensions(direction, i) }}</strong> dimensions with fixed length. Specify to which dimension and indices of this dimension this variable corresponds:</span>
                   <q-select
+                    filled
                     v-model="linkModelVariables[direction].metadata[i].linked_model_var!.linked_dim_index"
                     :options="dimensionOptions(direction, i).value"
                     emit-value
@@ -264,9 +450,38 @@ const updateDimensionOption = (direction: 'input' | 'output', index: number) => 
         </template>
       
         <q-btn class="q-mt-md" color="primary" label="Save" @click="saveModelVariableLinks"></q-btn>
+        <q-btn class="q-mt-md q-ml-sm" color="grey-8" label="Cancel" @click="dialogLinkModel = false"></q-btn>
 
         <q-inner-loading :showing="linkModelVariablesLoading" />
       </q-card-section>
     </q-card>
   </q-dialog>
 </template>
+
+<style>
+.category-table {
+  width: 100%;
+  border-collapse: collapse;
+  /* border: 1px solid gray; */
+}
+
+.category-table tr td, th {
+  border: 1px solid rgba(66, 66, 66, 0.5);
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.category-table th.category-name {
+  min-width: 30%;
+  text-align: right;;
+}
+.category-table td.category-value {
+  text-align: left
+}
+
+.category-table td.category-actions {
+  text-align: right;
+  width: 0.1%;
+}
+
+</style>
