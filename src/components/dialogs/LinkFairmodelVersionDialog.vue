@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import { FairmodelVersion, MetadataMappedLinks, MetadataVariable, MetadataVariableMetadata, ModelVariable } from 'src/types';
+import { FairmodelVersion, MetadataMappedLinks, MetadataVariable, MetadataVariableMetadata, ModelVariable, VariableMetadataCategories } from 'src/types';
 import { fairmodelVersionApiService } from 'src/utils/fairmodelversion.api.service';
 import { computed, ref, watch } from 'vue';
 
@@ -189,7 +189,7 @@ const updateVariableType = (direction: 'input' | 'output', i: number, type: Meta
   } else if (type == 'CATEGORICAL') {
     linkModelVariables.value[direction].metadata[i].meta = {
       type: 'CATEGORICAL',
-      categories: [],
+      categories: {},
     }
   } else if (type == 'NUMERICAL') {
     linkModelVariables.value[direction].metadata[i].meta = {
@@ -210,16 +210,77 @@ const isVariableConfigured = computed(() => (direction: 'input' | 'output', i: n
 })
 
 // type MappedCategory = {
-//   key: string,
+//   name: string,
 //   value: string,
 // }
 
-// const newCategoryField = ref<Record<string, MappedCategory>>();
+type VariableDirection = 'input' | 'output'
+type VariableKey = `${VariableDirection}_${number}`
+
+const newCategoryCache = ref<Record<VariableKey, {name: string | undefined, value: string | undefined}>>({});
+
+// const getNewCategoryField = computed(() => (variable: VaribleKey) => ({
+//   get: () => {
+//     if (variable in newCategoryField.value) {
+//       return newCategoryField.value[variable];
+//     } else {
+//       return {key: null, value: null}
+//     }
+//   },
+//   set: (value: string) => {
+//     console.log("SETTING", value)
+//   }
+// }))
+
+const getNewCategory = computed(() => (varkey: VariableKey) => {
+  return {
+    name: undefined,
+    value: undefined,
+    ...newCategoryCache.value[varkey] ?? {},
+  }
+})
+
+const setNewCategory = (varkey: VariableKey, obj: {name?: string | undefined, value?: string | undefined}) => {
+  newCategoryCache.value[varkey] = {
+    ...newCategoryCache.value[varkey],
+    ...obj
+  }
+}
+
+const addNewCategory = (direction: 'input' | 'output', i: number) => {
+  if (linkModelVariables.value[direction].metadata[i].meta?.type == 'CATEGORICAL') {
+    const obj = newCategoryCache.value[`${direction}_${i}`]
+    if (obj.name === undefined || obj.name == '') {
+      $q.notify({type: 'negative', message: 'Name cannot be empty'});
+      return false;
+    }
+    if (obj.value === undefined || obj.value == '') {
+      $q.notify({type: 'negative', message: 'Value cannot be empty'});
+      return false;
+    }
+
+    if (isNaN(Number(obj.value))) {
+      $q.notify({type: 'negative', message: 'Value must be a number'});
+      return false;
+    }
+
+    linkModelVariables.value[direction].metadata[i].meta.categories[obj.name] = +obj.value
+
+    delete newCategoryCache.value[`${direction}_${i}`];
+  }
+}
+
+const deleteCategory = (direction: 'input' | 'output', i: number, name: string) => {
+  if (confirm('Are you sure you want to remove this category?')) {
+    if (linkModelVariables.value[direction].metadata[i].meta?.type == 'CATEGORICAL')
+      delete linkModelVariables.value[direction].metadata[i].meta.categories[name]
+  }
+}
 
 </script>
 
 <template>
-  <q-dialog v-model="dialogLinkModel" no-esc-dismiss>
+  <q-dialog v-model="dialogLinkModel" no-esc-dismiss no-backdrop-dismiss>
     <q-card style="min-width: 64rem">
       <q-card-section>
         <div class="text-h4">Link Model Features</div>
@@ -263,7 +324,7 @@ const isVariableConfigured = computed(() => (direction: 'input' | 'output', i: n
                   </div>
                   <div v-else-if="linkModelVariables[direction].metadata[i].meta.type == 'CATEGORICAL'">
                     <p class="q-my-md text-caption">Specify the categories for this categorical variable:</p>
-                    <q-select
+                    <!--<q-select
                       label="Categories"
                       filled dense
                       v-model="linkModelVariables[direction].metadata[i].meta.categories"
@@ -274,26 +335,46 @@ const isVariableConfigured = computed(() => (direction: 'input' | 'output', i: n
                       input-debounce="0"
                       new-value-mode="add-unique"
                     />
-                    <!-- 
-                    <div v-for="category in linkModelVariables[direction].metadata[i].meta.categories" :key="category">
-                      {{ category }}
-                    </div>
-                    <div style="display: flex;">
+                    -->
+                    <!-- <div
+                      v-for="[category_key, category_value] in Object.entries(linkModelVariables[direction].metadata[i].meta.categories)"
+                      :key="category_key"
+                      class="q-mx-sm q-mb-sm q-px-sm q-py-xs bg-red-8"
+                    >
+                      <span style="min-width: 20%; display: inline-block;">{{ category_key }}:</span><span>{{ category_value }}</span>
+                    </div> -->
+                    <table class="category-table q-my-sm">
+                      <tbody>
+                        <tr
+                          v-for="[category_name, category_value] in Object.entries(linkModelVariables[direction].metadata[i].meta.categories)"
+                          :key="category_name"
+                        >
+                          <th class="category-name">{{ category_name }}</th>
+                          <td class="category-value">{{ category_value }}</td>
+                          <td class="category-actions"><q-btn flat dense round @click="deleteCategory(direction, i, category_name)">&times;</q-btn></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style="display: flex; align-items: center;">
                       <q-input
-                        class="q-ml-sm"
+                        class=""
                         label="Name"
                         filled dense
-                        v-model="newCategoryField[direction].metadata[i].meta"
+                        :model-value="getNewCategory(`${direction}_${i}`).name"
+                        @update:model-value="e => setNewCategory(`${direction}_${i}`, {name: e as string})"
+                        @keydown.enter="addNewCategory(direction, i)"
                       />
                       <q-input
                         class="q-ml-sm"
                         label="Value"
                         filled dense
-                        v-model="linkModelVariables[direction].metadata[i].meta"
+                        AAA-type="number"
+                        :model-value="getNewCategory(`${direction}_${i}`).value"
+                        @update:model-value="e => setNewCategory(`${direction}_${i}`, {value: (e as string) ?? undefined})"
+                        @keydown.enter="addNewCategory(direction, i)"
                       />
-                      <q-btn class="q-ml-sm">Add</q-btn>
+                      <q-btn class="q-ml-sm" @click="addNewCategory(direction, i)">Add</q-btn>
                     </div>
-                      -->
                   </div>
                   <div v-else-if="linkModelVariables[direction].metadata[i].meta.type == 'NUMERICAL'">
                     <p class="q-my-md text-caption">Specify the unit for this numerical variable:</p>
@@ -376,3 +457,31 @@ const isVariableConfigured = computed(() => (direction: 'input' | 'output', i: n
     </q-card>
   </q-dialog>
 </template>
+
+<style>
+.category-table {
+  width: 100%;
+  border-collapse: collapse;
+  /* border: 1px solid gray; */
+}
+
+.category-table tr td, th {
+  border: 1px solid rgba(66, 66, 66, 0.5);
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.category-table th.category-name {
+  min-width: 30%;
+  text-align: right;;
+}
+.category-table td.category-value {
+  text-align: left
+}
+
+.category-table td.category-actions {
+  text-align: right;
+  width: 0.1%;
+}
+
+</style>
