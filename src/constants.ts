@@ -1,5 +1,5 @@
 
-var address = 'https://api.fairmodels.org';	// Production
+let address = 'https://api.fairmodels.org';	// Production
 if (location.hostname === 'localhost') {
     address = 'http://localhost:8000';	// Development
 }
