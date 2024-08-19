@@ -62,7 +62,7 @@ onMounted(() => {
 
 const table = reactive({
   columns: [
-    {name: 'id', label: 'Id', field: (row: Fairmodel) => row.id, align: 'left' },
+    {name: 'id', label: 'Id', field: (row: Fairmodel) => `${row.id.substring(0, 8)}...`, align: 'left', style: 'width: 1%; whitespace: nowrap' },
     {name: 'name', label: 'Name', field: (row: Fairmodel) => row.name, align: 'left' },
     {name: 'desc', label: 'Description', field: (row: Fairmodel) => row.description, align: 'left' },
     {name: 'actions', label: 'Actions', align: 'right' },
@@ -118,7 +118,7 @@ const actionView = (row: Fairmodel) => {
 <template>
   <q-page>
     <div class="row justify-center q-mt-xl">
-      <div class="col-md-6">
+      <div class="col-10 col-lg-8 col-xl-6">
         <h4 class="text-bold q-mt-md q-mb-lg">Fairmodels</h4>
         
         <q-btn color="primary" label="Create new" @click="createNewDialog = true" />

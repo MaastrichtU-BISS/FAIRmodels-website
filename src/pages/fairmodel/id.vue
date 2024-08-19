@@ -12,6 +12,9 @@ import ViewFairmodelMetadataDialog from 'src/components/dialogs/ViewFairmodelMet
 import SetFairmodelModelDialog from 'src/components/dialogs/SetFairmodelModelDialog.vue';
 import ViewFairmodelModelDialog from 'src/components/dialogs/ViewFairmodelModelDialog.vue'
 import LinkFairmodelVersionDialog from 'src/components/dialogs/LinkFairmodelVersionDialog.vue';
+import { EXECUTOR_BASE_URL } from 'src/constants';
+
+import { symOutlinedPlayCircle } from '@quasar/extras/material-symbols-outlined'
 
 const $q = useQuasar()
 const route = useRoute();
@@ -35,7 +38,7 @@ onMounted(async () => {
 
 const table = reactive({
   columns: [
-    {name: 'id', label: 'Id', field: (row: FairmodelVersion) => row.id, align: 'left' },
+    {name: 'id', label: 'Id', field: (row: FairmodelVersion) => `${row.id.substring(0, 8)}...`, align: 'left', style: 'width: 1%; whitespace: nowrap' },
     {name: 'version', label: 'Name', field: (row: FairmodelVersion) => row.version, align: 'left' },
     {name: 'update_desc', label: 'Update Description', field: (row: FairmodelVersion) => row.update_description, align: 'left' },
     {name: 'metadata', label: 'Cedar Metadata ID', field: (row: FairmodelVersion) => row.metadata_id == null ? 'false' : row.metadata_id, align: 'center' },
@@ -99,7 +102,7 @@ const refreshTable = () => {
 <template>
   <q-page v-if="fairmodel">
     <div class="row justify-center q-mt-xl">
-      <div class="col-md-6">
+      <div class="col-10 col-lg-8 col-xl-6">
         <h4 class="text-bold q-mt-mxd q-mb-lg">Fairmodel {{ fairmodel.name }}</h4>
 
         <q-btn color="primary" label="New Version" @click="showDialogCreateFairmodelVersion()" />
@@ -193,6 +196,11 @@ const refreshTable = () => {
                   <q-btn size="md" flat rounded icon="link" color="indigo-8" @click="showDialogLink(props.row)">
                     <q-tooltip anchor="top middle" :offset="[0, 25]">
                       Link fields
+                    </q-tooltip>
+                  </q-btn>
+                  <q-btn size="md" flat rounded :icon="symOutlinedPlayCircle" color="indigo-7" :href="`${EXECUTOR_BASE_URL}/${props.row.id}`" target="_blank">
+                    <q-tooltip anchor="top middle" :offset="[0, 25]">
+                      Execute
                     </q-tooltip>
                   </q-btn>
                 </q-td>
