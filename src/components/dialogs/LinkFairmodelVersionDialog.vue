@@ -4,6 +4,9 @@ import { FairmodelVersion, MetadataMappedLinks, MetadataVariable, MetadataVariab
 import { fairmodelVersionApiService } from 'src/utils/fairmodelversion.api.service';
 import { computed, ref, watch } from 'vue';
 
+import { symOutlinedAdd } from '@quasar/extras/material-symbols-outlined'
+import { symOutlinedDelete } from '@quasar/extras/material-symbols-outlined'
+
 const $q = useQuasar()
 
 const props = defineProps<{
@@ -209,11 +212,6 @@ const isVariableConfigured = computed(() => (direction: 'input' | 'output', i: n
   return true;
 })
 
-// type MappedCategory = {
-//   name: string,
-//   value: string,
-// }
-
 type VariableDirection = 'input' | 'output'
 type VariableKey = `${VariableDirection}_${number}`
 
@@ -233,10 +231,15 @@ const newCategoryCache = ref<Record<VariableKey, {name: string | undefined, valu
 // }))
 
 const getNewCategory = computed(() => (varkey: VariableKey) => {
+  // return {
+  //   name: undefined,
+  //   value: undefined,
+  //   ...newCategoryCache.value[varkey] ?? {},
+  // }
+
   return {
-    name: undefined,
-    value: undefined,
-    ...newCategoryCache.value[varkey] ?? {},
+    name: newCategoryCache.value[varkey]?.name,
+    value: newCategoryCache.value[varkey]?.value
   }
 })
 
@@ -351,30 +354,35 @@ const deleteCategory = (direction: 'input' | 'output', i: number, name: string) 
                         >
                           <th class="category-name">{{ category_name }}</th>
                           <td class="category-value">{{ category_value }}</td>
-                          <td class="category-actions"><q-btn flat dense round @click="deleteCategory(direction, i, category_name)">&times;</q-btn></td>
+                          <td class="category-actions">
+                            <q-btn flat dense :icon="symOutlinedDelete" @click="deleteCategory(direction, i, category_name)"></q-btn>
+                          </td>
+                        </tr>
+                        <tr class="new">
+                          <th class="category-name">
+                            <q-input
+                              label="Name"
+                              filled dense
+                              :model-value="getNewCategory(`${direction}_${i}`).name"
+                              @update:model-value="e => setNewCategory(`${direction}_${i}`, {name: e as string})"
+                              @keydown.enter="addNewCategory(direction, i)"
+                            />
+                          </th>
+                          <td class="category-value">
+                            <q-input
+                              label="Value"
+                              filled dense
+                              :model-value="getNewCategory(`${direction}_${i}`).value"
+                              @update:model-value="e => setNewCategory(`${direction}_${i}`, {value: (e as string) ?? undefined})"
+                              @keydown.enter="addNewCategory(direction, i)"
+                            />
+                          </td>
+                          <td class="category-actions">
+                            <q-btn flat dense :icon="symOutlinedAdd" @click="addNewCategory(direction, i)"></q-btn>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
-                    <div style="display: flex; align-items: center;">
-                      <q-input
-                        class=""
-                        label="Name"
-                        filled dense
-                        :model-value="getNewCategory(`${direction}_${i}`).name"
-                        @update:model-value="e => setNewCategory(`${direction}_${i}`, {name: e as string})"
-                        @keydown.enter="addNewCategory(direction, i)"
-                      />
-                      <q-input
-                        class="q-ml-sm"
-                        label="Value"
-                        filled dense
-                        AAA-type="number"
-                        :model-value="getNewCategory(`${direction}_${i}`).value"
-                        @update:model-value="e => setNewCategory(`${direction}_${i}`, {value: (e as string) ?? undefined})"
-                        @keydown.enter="addNewCategory(direction, i)"
-                      />
-                      <q-btn class="q-ml-sm" @click="addNewCategory(direction, i)">Add</q-btn>
-                    </div>
                   </div>
                   <div v-else-if="linkModelVariables[direction].metadata[i].meta.type == 'NUMERICAL'">
                     <p class="q-my-md text-caption">Specify the unit for this numerical variable:</p>
@@ -465,15 +473,15 @@ const deleteCategory = (direction: 'input' | 'output', i: number, name: string) 
   /* border: 1px solid gray; */
 }
 
-.category-table tr td, th {
-  border: 1px solid rgba(66, 66, 66, 0.5);
+.category-table tr td, .category-table tr th {
+  border: 1px solid rgba(66, 66, 66, 0.2);
   padding-left: 1rem;
   padding-right: 1rem;
 }
 
 .category-table th.category-name {
   min-width: 30%;
-  text-align: right;;
+  text-align: right;
 }
 .category-table td.category-value {
   text-align: left
@@ -482,6 +490,16 @@ const deleteCategory = (direction: 'input' | 'output', i: number, name: string) 
 .category-table td.category-actions {
   text-align: right;
   width: 0.1%;
+  /* border: 0; */
+}
+
+.category-table tr.new td, .category-table tr.new th {
+  /* border: 0; */
+  padding: 0.5rem;
+}
+
+.category-table tr.new td.category-actions {
+  padding-left: 1rem; padding-right: 1rem;
 }
 
 </style>
