@@ -3,6 +3,7 @@ import { useUserStore } from 'src/stores/user';
 import { authService } from 'src/utils/auth.service';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { symOutlinedBugReport } from '@quasar/extras/material-symbols-outlined';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -36,6 +37,11 @@ const logout = () => {
           <router-link to="/">
             <q-btn color="white" label="FAIR4AI" flat size="lg" />
           </router-link>
+          <q-btn class="q-ml-xs" flat target="_blank" href="https://github.com/MaastrichtU-BISS/FAIRmodels-website/issues" :icon="symOutlinedBugReport">
+            <q-tooltip>
+              Report Bug
+            </q-tooltip>
+          </q-btn>
         </q-toolbar-title>
         
         <q-btn class="q-ml-md q-px-sm" flat dense label="Account">
