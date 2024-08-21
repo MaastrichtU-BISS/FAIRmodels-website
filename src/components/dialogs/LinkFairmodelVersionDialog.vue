@@ -252,7 +252,13 @@ const setNewCategory = (varkey: VariableKey, obj: {name?: string | undefined, va
 
 const addNewCategory = (direction: 'input' | 'output', i: number) => {
   if (linkModelVariables.value[direction].metadata[i].meta?.type == 'CATEGORICAL') {
-    const obj = newCategoryCache.value[`${direction}_${i}`]
+    const obj = newCategoryCache.value[`${direction}_${i}`];
+
+    if (obj === undefined) {
+      $q.notify({type: 'negative', message: 'Category cannot be empty'});
+      return false;
+    }
+
     if (obj.name === undefined || obj.name == '') {
       $q.notify({type: 'negative', message: 'Name cannot be empty'});
       return false;
